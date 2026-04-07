@@ -179,6 +179,10 @@ Setup automatically:
 
 Podrobný návod v češtině: [NAVOD.txt](NAVOD.txt)
 
+## Author
+
+Made by [@programmingveya-netizen](https://github.com/programmingveya-netizen)
+
 ## License
 
 MIT License — see [LICENSE](LICENSE)
