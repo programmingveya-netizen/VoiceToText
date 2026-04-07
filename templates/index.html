@@ -27,6 +27,7 @@
         <p data-i18n="subtitle"></p>
     </div>
     <div class="lang-switcher">
+        <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" title="Light/Dark">&#9790;</button>
         <span style="font-size:18px; margin-right:4px;">&#127760;</span>
         <button id="lang-cs" class="active" onclick="setLang('cs')">CZ</button>
         <button id="lang-en" onclick="setLang('en')">EN</button>
@@ -141,6 +142,11 @@ const T = {
         loaded_from_project: 'Načten z projektu',
         marked_count: (n) => `Nalezeno ${n} označených výrazů:`,
         upload_error: 'Chyba při nahrávání',
+        stats_words: 'slov',
+        stats_chars: 'znaků',
+        stats_duration: 'délka',
+        stats_reading: 'čtení',
+        minutes: 'min',
     },
     en: {
         subtitle: 'Upload a video or audio file and convert it to text',
@@ -196,6 +202,11 @@ const T = {
         loaded_from_project: 'Loaded from project',
         marked_count: (n) => `Found ${n} marked phrases:`,
         upload_error: 'Upload error',
+        stats_words: 'words',
+        stats_chars: 'chars',
+        stats_duration: 'duration',
+        stats_reading: 'reading',
+        minutes: 'min',
     }
 };
 
@@ -327,6 +338,7 @@ async function showResults(jobId) {
             <span class="search-match-count" id="search-count-${jobId}"></span>
         </div>
         <div class="transcript-box" id="transcript-${jobId}"></div>
+        <div class="stats-bar" id="stats-${jobId}"></div>
         <div id="claims-summary-${jobId}" style="margin:10px 0;"></div>
         <div class="actions">
             <button class="btn btn-primary" onclick="exportFile('${jobId}', 'txt')">${t('export_txt')}</button>
@@ -405,6 +417,26 @@ function renderSegments(jobId) {
         });
     }
     renderClaimsSummary(jobId);
+    renderStats(jobId);
+}
+
+function renderStats(jobId) {
+    const statsDiv = document.getElementById(`stats-${jobId}`);
+    if (!statsDiv || !jobData[jobId]) return;
+    const segments = jobData[jobId].segments;
+    const fullText = segments.map(s => s.text).join(' ');
+    const words = fullText.split(/\s+/).filter(w => w.length > 0).length;
+    const chars = fullText.length;
+    const duration = segments.length > 0 ? segments[segments.length - 1].end : 0;
+    const durationStr = formatTimestamp(duration);
+    const readingMin = Math.max(1, Math.round(words / 200));
+
+    statsDiv.innerHTML = `
+        <span>${words} ${t('stats_words')}</span>
+        <span>${chars} ${t('stats_chars')}</span>
+        <span>${t('stats_duration')}: ${durationStr}</span>
+        <span>${t('stats_reading')}: ~${readingMin} ${t('minutes')}</span>
+    `;
 }
 
 function renderClaimsSummary(jobId) {
@@ -630,6 +662,51 @@ async function saveProject(jobId) {
 document.getElementById('modelSelect').addEventListener('change', function() {
     const hints = { small: t('model_hint_small'), medium: t('model_hint_medium'), 'large-v3': t('model_hint_large') };
     document.getElementById('modelHint').textContent = hints[this.value] || '';
+});
+
+// Theme toggle
+function toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme') || 'dark';
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('vtt_theme', next);
+    document.getElementById('themeBtn').textContent = next === 'dark' ? '\u263E' : '\u2600';
+}
+
+// Init theme
+const savedTheme = localStorage.getItem('vtt_theme') || 'dark';
+document.documentElement.setAttribute('data-theme', savedTheme);
+document.getElementById('themeBtn').textContent = savedTheme === 'dark' ? '\u263E' : '\u2600';
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+    // Ctrl+S - save edits
+    if (e.ctrlKey && e.key === 's') {
+        e.preventDefault();
+        const saveBtn = document.querySelector('[id^="save-btn-"]:not([style*="display: none"])');
+        if (saveBtn) saveBtn.click();
+    }
+    // Ctrl+F - focus search (if results visible)
+    if (e.ctrlKey && e.key === 'f') {
+        const searchInput = document.querySelector('.search-bar input');
+        if (searchInput) { e.preventDefault(); searchInput.focus(); }
+    }
+    // Ctrl+E - export TXT (first visible job)
+    if (e.ctrlKey && e.key === 'e') {
+        e.preventDefault();
+        const firstJob = Object.keys(jobData)[0];
+        if (firstJob) exportFile(firstJob, 'txt');
+    }
+    // Escape - clear search
+    if (e.key === 'Escape') {
+        const searchInput = document.querySelector('.search-bar input:focus');
+        if (searchInput) {
+            searchInput.value = '';
+            const jobId = searchInput.id.replace('search-input-', '');
+            if (jobData[jobId]) { jobData[jobId].searchQuery = ''; renderSegments(jobId); }
+            document.getElementById(`search-count-${jobId}`).textContent = '';
+        }
+    }
 });
 
 // Init language on load
