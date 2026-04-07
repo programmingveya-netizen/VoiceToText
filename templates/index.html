@@ -279,18 +279,35 @@ function createJobCard(jobId, filename) {
     card.className = 'job-card';
     card.id = `job-${jobId}`;
     card.innerHTML = `
-        <div class="job-header">
-            <span class="job-filename">${escapeHtml(filename)}</span>
+        <div class="job-header" onclick="toggleJobBody('${jobId}')" style="cursor:pointer;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span class="collapse-arrow" id="arrow-${jobId}">&#9660;</span>
+                <span class="job-filename">${escapeHtml(filename)}</span>
+            </div>
             <div style="display:flex; gap:8px; align-items:center;">
                 <span class="job-status queued" id="status-${jobId}">${t('queued')}</span>
-                <button class="btn-delete" onclick="deleteJob('${jobId}')" title="X">X</button>
+                <button class="btn-delete" onclick="event.stopPropagation(); deleteJob('${jobId}')" title="X">X</button>
             </div>
         </div>
-        <div class="progress-bar"><div class="progress-fill" id="progress-${jobId}" style="width: 0%"></div></div>
-        <div id="progress-text-${jobId}" style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">${t('waiting')}</div>
-        <div id="results-${jobId}" class="results-area" style="display:none;"></div>
+        <div id="body-${jobId}" class="job-body">
+            <div class="progress-bar"><div class="progress-fill" id="progress-${jobId}" style="width: 0%"></div></div>
+            <div id="progress-text-${jobId}" style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">${t('waiting')}</div>
+            <div id="results-${jobId}" class="results-area" style="display:none;"></div>
+        </div>
     `;
     jobsList.prepend(card);
+}
+
+function toggleJobBody(jobId) {
+    const body = document.getElementById(`body-${jobId}`);
+    const arrow = document.getElementById(`arrow-${jobId}`);
+    if (body.classList.contains('collapsed')) {
+        body.classList.remove('collapsed');
+        arrow.textContent = '\u25BC';
+    } else {
+        body.classList.add('collapsed');
+        arrow.textContent = '\u25B6';
+    }
 }
 
 function pollJobStatus(jobId) {
