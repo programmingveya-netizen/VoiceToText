@@ -1,0 +1,85 @@
+============================================
+  Voice To Text - User Guide
+============================================
+
+
+INSTALLATION (one-time):
+------------------------
+1. Double-click "setup.bat"
+   - If Python is missing, it will be downloaded and installed automatically
+   - Installs all required libraries
+   - Downloads the language model for transcription
+   - Creates a "Voice To Text" icon on your desktop
+   - First installation may take 5-10 minutes
+
+
+LAUNCHING:
+----------
+Double-click the "Voice To Text" icon on your desktop
+(or run "start.bat" from the folder).
+To quit, close the application window.
+
+
+USAGE:
+------
+1. UPLOAD - Drag and drop video/audio files into the app
+   (or click to browse). Multiple files can be uploaded at once.
+
+2. TRANSCRIPTION - The app automatically transcribes the recording.
+   A progress bar shows the status. The "medium" model is recommended
+   for good Czech accuracy.
+
+3. EDIT TEXT - Click on any text to edit it (fix names, typos).
+   Changes are automatically saved when exporting.
+
+4. SEARCH - Use the "Search in transcript" field above the text.
+   Results are highlighted in yellow.
+   Click "Mark red" to permanently highlight them.
+
+5. TRANSLATION - Check the languages you want (SK, EN, DE, PL, HU, RO)
+   and click "Translate selected". Proper names are preserved
+   (editable in Settings > Names).
+
+6. EXPORT - Download buttons:
+   - TXT  = plain text with timestamps
+   - PDF  = formatted document, marked phrases in red
+   - SRT  = subtitles for video
+   - ZIP  = everything at once (including translations)
+
+7. SAVE - "Save changes" button saves the project.
+   It can be loaded later via "Saved projects" at the top.
+
+
+SETTINGS:
+---------
+The "Settings" button contains:
+- Correction dictionary: automatic fixes during transcription
+  (format: wrong text = correct text)
+- Names: names that should not be translated to other languages
+
+
+SUPPORTED FORMATS:
+------------------
+MP3, MP4, WAV, M4A, OGG, FLAC, WEBM, MKV, AVI, MOV
+
+
+TRANSFERRING TO ANOTHER PC:
+----------------------------
+1. Copy the entire "VoiceToText" folder to the other computer
+   (e.g. via USB drive or network)
+2. On the new computer, double-click "setup.bat"
+3. Done - click the icon on the desktop
+
+Note: The uploads, outputs, and projects folders contain
+your data. If you don't want to transfer them, delete them
+before copying (the app will recreate them).
+
+
+NOTES:
+------
+- If you have an NVIDIA graphics card, transcription will
+  automatically be significantly faster (the app detects it).
+- The "medium" model is recommended. "small" is faster but
+  less accurate, "large" is most accurate but slowest.
+- The correction dictionary and names are stored in dictionary.txt
+  and names.txt in the application folder.
