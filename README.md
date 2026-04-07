@@ -11,7 +11,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/python-3.10+-blue?logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/whisper-faster--whisper-orange" alt="Whisper">
-  <img src="https://img.shields.io/badge/UI-FastAPI%20%2B%20Dark%20Mode-purple" alt="UI">
+  <img src="https://img.shields.io/badge/UI-FastAPI%20%2B%20Dark%20Mode-a93226" alt="UI">
   <img src="https://img.shields.io/badge/GPU-auto%20detect-green" alt="GPU">
 </p>
 

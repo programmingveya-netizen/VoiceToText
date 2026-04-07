@@ -5,51 +5,51 @@
 }
 
 :root, [data-theme="dark"] {
-    --bg-primary: #0f1117;
-    --bg-secondary: #1a1d27;
-    --bg-card: #1e2130;
-    --bg-input: #252838;
-    --bg-hover: #2a2e3f;
-    --border: #2e3348;
-    --border-light: #3a3f55;
-    --text-primary: #e4e7f0;
-    --text-secondary: #8b90a5;
-    --text-muted: #5c6178;
-    --accent: #6366f1;
-    --accent-light: #818cf8;
-    --accent-glow: rgba(99, 102, 241, 0.15);
+    --bg-primary: #0f1013;
+    --bg-secondary: #1a1618;
+    --bg-card: #211c1f;
+    --bg-input: #2a2326;
+    --bg-hover: #332a2e;
+    --border: #3d2f34;
+    --border-light: #4d3b42;
+    --text-primary: #f0e8eb;
+    --text-secondary: #a5909a;
+    --text-muted: #786870;
+    --accent: #c0392b;
+    --accent-light: #e74c3c;
+    --accent-glow: rgba(192, 57, 43, 0.18);
     --green: #10b981;
     --green-bg: rgba(16, 185, 129, 0.1);
     --red: #ef4444;
     --red-bg: rgba(239, 68, 68, 0.1);
     --orange: #f59e0b;
     --orange-bg: rgba(245, 158, 11, 0.1);
-    --purple: #a855f7;
-    --purple-bg: rgba(168, 85, 247, 0.1);
+    --purple: #8b2252;
+    --purple-bg: rgba(139, 34, 82, 0.15);
 }
 
 [data-theme="light"] {
-    --bg-primary: #f5f5f9;
+    --bg-primary: #f9f5f6;
     --bg-secondary: #ffffff;
     --bg-card: #ffffff;
-    --bg-input: #f0f1f5;
-    --bg-hover: #e8eaef;
-    --border: #d4d7e0;
-    --border-light: #c0c4d0;
-    --text-primary: #1a1d2b;
-    --text-secondary: #5c6178;
-    --text-muted: #8b90a5;
-    --accent: #6366f1;
-    --accent-light: #4f46e5;
-    --accent-glow: rgba(99, 102, 241, 0.1);
+    --bg-input: #f5f0f1;
+    --bg-hover: #efe8ea;
+    --border: #e0d4d7;
+    --border-light: #d0c0c5;
+    --text-primary: #2b1a1f;
+    --text-secondary: #6e5560;
+    --text-muted: #a09098;
+    --accent: #a93226;
+    --accent-light: #c0392b;
+    --accent-glow: rgba(169, 50, 38, 0.1);
     --green: #059669;
     --green-bg: rgba(5, 150, 105, 0.08);
     --red: #dc2626;
     --red-bg: rgba(220, 38, 38, 0.06);
     --orange: #d97706;
     --orange-bg: rgba(217, 119, 6, 0.08);
-    --purple: #7c3aed;
-    --purple-bg: rgba(124, 58, 237, 0.08);
+    --purple: #7a1a45;
+    --purple-bg: rgba(122, 26, 69, 0.08);
 }
 
 body {
