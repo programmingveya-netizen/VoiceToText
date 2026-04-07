@@ -7,35 +7,15 @@
     <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="/static/style.css">
     <style>
-        .search-match {
-            background: rgba(245, 158, 11, 0.3);
-            border-radius: 3px;
-        }
-        .search-bar {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            margin-bottom: 10px;
-            flex-wrap: wrap;
-        }
-        .search-bar input {
-            flex: 1;
-            min-width: 180px;
-            padding: 6px 12px;
-            background: var(--bg-input);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: var(--text-primary);
-            font-size: 13px;
-        }
-        .search-bar input:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
-        .search-match-count {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
+        .search-match { background: rgba(245, 158, 11, 0.3); border-radius: 3px; }
+        .search-bar { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+        .search-bar input { flex: 1; min-width: 180px; padding: 6px 12px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary); font-size: 13px; }
+        .search-bar input:focus { outline: none; border-color: var(--accent); }
+        .search-match-count { font-size: 12px; color: var(--text-muted); }
+        .lang-switcher { margin-left: auto; display: flex; align-items: center; gap: 4px; }
+        .lang-switcher button { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .lang-switcher button.active { background: var(--accent); color: white; border-color: var(--accent); }
+        .lang-switcher button:hover:not(.active) { border-color: var(--text-muted); }
     </style>
 </head>
 <body>
@@ -44,122 +24,242 @@
     <img src="/static/icona.png" alt="Voice To Text" class="header-icon">
     <div>
         <h1>Voice To Text</h1>
-        <p>Nahrajte video nebo audio soubor a převeďte ho na text</p>
+        <p data-i18n="subtitle"></p>
+    </div>
+    <div class="lang-switcher">
+        <span style="font-size:18px; margin-right:4px;">&#127760;</span>
+        <button id="lang-cs" class="active" onclick="setLang('cs')">CZ</button>
+        <button id="lang-en" onclick="setLang('en')">EN</button>
     </div>
 </div>
 
 <div class="container">
-    <!-- Upload oblast -->
     <div class="upload-area" id="uploadArea">
         <div class="icon">&#128190;</div>
-        <h3>Přetáhněte soubory sem nebo klikněte pro výběr</h3>
-        <p>Podporované formáty: MP3, MP4, WAV, M4A, OGG, FLAC, WEBM, MKV, AVI, MOV</p>
-        <p style="margin-top:8px; color:#2563eb; font-weight:600;">Lze nahrát více souborů najednou</p>
-        <input type="file" id="fileInput" multiple
-               accept=".mp3,.mp4,.wav,.m4a,.ogg,.flac,.webm,.mkv,.avi,.mov">
+        <h3 data-i18n="upload_title"></h3>
+        <p>MP3, MP4, WAV, M4A, OGG, FLAC, WEBM, MKV, AVI, MOV</p>
+        <p style="margin-top:8px; color:#6366f1; font-weight:600;" data-i18n="upload_batch"></p>
+        <input type="file" id="fileInput" multiple accept=".mp3,.mp4,.wav,.m4a,.ogg,.flac,.webm,.mkv,.avi,.mov">
     </div>
 
-    <!-- Volba modelu -->
     <div class="settings-bar">
-        <label>Model přepisu:</label>
+        <label data-i18n="model_label"></label>
         <select id="modelSelect" class="lang-select">
-            <option value="small">Rychlý (small) - nižší kvalita, rychlý přepis</option>
-            <option value="medium" selected>Přesný (medium) - dobrá čeština, doporučeno</option>
-            <option value="large-v3">Nejpřesnější (large) - nejlepší kvalita, nejpomalejší</option>
+            <option value="small" data-i18n-opt="model_small"></option>
+            <option value="medium" selected data-i18n-opt="model_medium"></option>
+            <option value="large-v3" data-i18n-opt="model_large"></option>
         </select>
-        <span style="color:var(--text-muted); font-size:12px;" id="modelHint">Doporučeno - dobrá čeština</span>
+        <span style="color:var(--text-muted); font-size:12px;" id="modelHint"></span>
     </div>
 
-    <!-- Nastavení - slovník a jména -->
     <div style="margin-bottom:20px;">
-        <button class="btn btn-dark" onclick="toggleSettings()">
-            Nastaveni (slovnik oprav, jmena)
-        </button>
+        <button class="btn btn-dark" onclick="toggleSettings()" data-i18n="settings_btn"></button>
         <div id="settingsPanel" class="settings-panel" style="display:none;">
             <div style="display:flex; gap:20px; flex-wrap:wrap;">
                 <div style="flex:1; min-width:280px;">
-                    <h4 style="margin:0 0 8px; color:var(--text-primary);">Slovnik oprav</h4>
-                    <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">
-                        Automaticke opravy pri prepisu. Format: chybny text = spravny text
-                    </p>
+                    <h4 style="margin:0 0 8px; color:var(--text-primary);" data-i18n="dict_title"></h4>
+                    <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px;" data-i18n="dict_desc"></p>
                     <textarea id="dictionaryEditor" rows="8"></textarea>
                 </div>
                 <div style="flex:1; min-width:280px;">
-                    <h4 style="margin:0 0 8px; color:var(--text-primary);">Jmena (neprekladat)</h4>
-                    <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">
-                        Jmena ktera zustanou v originale pri prekladu. Jedno na radek.
-                    </p>
+                    <h4 style="margin:0 0 8px; color:var(--text-primary);" data-i18n="names_title"></h4>
+                    <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px;" data-i18n="names_desc"></p>
                     <textarea id="namesEditor" rows="8"></textarea>
                 </div>
             </div>
             <div style="margin-top:10px; display:flex; gap:8px;">
-                <button class="btn btn-primary" onclick="saveSettings()">Ulozit nastaveni</button>
-                <span id="settingsSaved" style="color:var(--green); font-size:13px; display:none; align-self:center;">Ulozeno!</span>
+                <button class="btn btn-primary" onclick="saveSettings()" data-i18n="save_settings"></button>
+                <span id="settingsSaved" style="color:var(--green); font-size:13px; display:none; align-self:center;" data-i18n="saved"></span>
             </div>
         </div>
     </div>
 
-    <!-- Ulozene projekty -->
     <div style="margin-bottom:20px;">
-        <button class="btn btn-dark" onclick="toggleProjects()">
-            Ulozene projekty
-        </button>
+        <button class="btn btn-dark" onclick="toggleProjects()" data-i18n="projects_btn"></button>
         <div id="projectsPanel" class="settings-panel" style="display:none;">
-            <div id="projectsList" style="color:var(--text-secondary); font-size:13px;">Nacitam...</div>
+            <div id="projectsList" style="color:var(--text-secondary); font-size:13px;" data-i18n="loading"></div>
         </div>
     </div>
 
-    <!-- Seznam úloh -->
     <div class="jobs-list" id="jobsList"></div>
 </div>
 
 <script>
+// ── i18n ──────────────────────────────────────────────
+const T = {
+    cs: {
+        subtitle: 'Nahrajte video nebo audio soubor a převeďte ho na text',
+        upload_title: 'Přetáhněte soubory sem nebo klikněte pro výběr',
+        upload_batch: 'Lze nahrát více souborů najednou',
+        model_label: 'Model přepisu:',
+        model_small: 'Rychlý (small) - nižší kvalita',
+        model_medium: 'Přesný (medium) - doporučeno',
+        model_large: 'Nejpřesnější (large) - nejpomalejší',
+        model_hint_small: 'Rychlejší, ale méně přesný',
+        model_hint_medium: 'Doporučeno',
+        model_hint_large: 'Nejlepší přesnost, vyžaduje hodně RAM',
+        settings_btn: 'Nastavení (slovník oprav, jména)',
+        dict_title: 'Slovník oprav',
+        dict_desc: 'Automatické opravy při přepisu. Formát: chybný text = správný text',
+        names_title: 'Jména (nepřekládat)',
+        names_desc: 'Jména která zůstanou v originále při překladu. Jedno na řádek.',
+        save_settings: 'Uložit nastavení',
+        saved: 'Uloženo!',
+        projects_btn: 'Uložené projekty',
+        loading: 'Načítám...',
+        no_projects: 'Žádné uložené projekty.',
+        load_btn: 'Načíst',
+        queued: 'Ve frontě',
+        processing: 'Zpracovávám',
+        done: 'Hotovo',
+        error: 'Chyba',
+        waiting: 'Čekání na zpracování...',
+        transcribing: 'Přepisuji...',
+        done_segments: (n) => `Dokončeno - ${n} segmentů`,
+        transcript_title: 'Přepis textu',
+        click_to_edit: '(klikněte na text pro úpravu)',
+        save_changes: 'Uložit změny',
+        save_project: 'Uložit úpravy',
+        search_placeholder: 'Hledat v přepisu...',
+        search_btn: 'Hledat',
+        mark_red: 'Označit červeně',
+        found: (n) => `Nalezeno: ${n}`,
+        export_txt: 'Exportovat TXT',
+        export_pdf: 'Exportovat PDF',
+        export_srt: 'Exportovat SRT titulky',
+        export_zip: 'Exportovat vše (ZIP)',
+        translate_to: 'Přeložit do:',
+        translate_btn: 'Přeložit vybrané',
+        translating: (lang, i, n) => `Překládám ${lang} (${i}/${n})...`,
+        translated_done: (n) => `Hotovo - ${n} jazyků přeloženo`,
+        select_lang: 'Vyberte alespoň jeden jazyk',
+        downloaded: (f) => `Staženo: ${f}`,
+        marked_red: (q) => `"${q}" označeno červeně`,
+        enter_search: 'Nejdříve zadejte hledaný text',
+        project_saved: 'Projekt uložen',
+        project_loaded: 'Projekt načten',
+        loaded_from_project: 'Načten z projektu',
+        marked_count: (n) => `Nalezeno ${n} označených výrazů:`,
+        upload_error: 'Chyba při nahrávání',
+    },
+    en: {
+        subtitle: 'Upload a video or audio file and convert it to text',
+        upload_title: 'Drag files here or click to browse',
+        upload_batch: 'Multiple files can be uploaded at once',
+        model_label: 'Transcription model:',
+        model_small: 'Fast (small) - lower quality',
+        model_medium: 'Accurate (medium) - recommended',
+        model_large: 'Most accurate (large) - slowest',
+        model_hint_small: 'Faster but less accurate',
+        model_hint_medium: 'Recommended',
+        model_hint_large: 'Best accuracy, requires more RAM',
+        settings_btn: 'Settings (dictionary, names)',
+        dict_title: 'Correction dictionary',
+        dict_desc: 'Automatic corrections during transcription. Format: wrong text = correct text',
+        names_title: 'Names (do not translate)',
+        names_desc: 'Names that stay in original when translating. One per line.',
+        save_settings: 'Save settings',
+        saved: 'Saved!',
+        projects_btn: 'Saved projects',
+        loading: 'Loading...',
+        no_projects: 'No saved projects.',
+        load_btn: 'Load',
+        queued: 'Queued',
+        processing: 'Processing',
+        done: 'Done',
+        error: 'Error',
+        waiting: 'Waiting for processing...',
+        transcribing: 'Transcribing...',
+        done_segments: (n) => `Done - ${n} segments`,
+        transcript_title: 'Transcript',
+        click_to_edit: '(click text to edit)',
+        save_changes: 'Save changes',
+        save_project: 'Save project',
+        search_placeholder: 'Search in transcript...',
+        search_btn: 'Search',
+        mark_red: 'Mark red',
+        found: (n) => `Found: ${n}`,
+        export_txt: 'Export TXT',
+        export_pdf: 'Export PDF',
+        export_srt: 'Export SRT subtitles',
+        export_zip: 'Export all (ZIP)',
+        translate_to: 'Translate to:',
+        translate_btn: 'Translate selected',
+        translating: (lang, i, n) => `Translating ${lang} (${i}/${n})...`,
+        translated_done: (n) => `Done - ${n} languages translated`,
+        select_lang: 'Select at least one language',
+        downloaded: (f) => `Downloaded: ${f}`,
+        marked_red: (q) => `"${q}" marked red`,
+        enter_search: 'Enter search text first',
+        project_saved: 'Project saved',
+        project_loaded: 'Project loaded',
+        loaded_from_project: 'Loaded from project',
+        marked_count: (n) => `Found ${n} marked phrases:`,
+        upload_error: 'Upload error',
+    }
+};
+
+let currentLang = localStorage.getItem('vtt_lang') || 'cs';
+
+function t(key, ...args) {
+    const val = T[currentLang]?.[key] || T['cs'][key] || key;
+    return typeof val === 'function' ? val(...args) : val;
+}
+
+function setLang(lang) {
+    currentLang = lang;
+    localStorage.setItem('vtt_lang', lang);
+    document.getElementById('lang-cs').className = lang === 'cs' ? 'active' : '';
+    document.getElementById('lang-en').className = lang === 'en' ? 'active' : '';
+    applyI18n();
+}
+
+function applyI18n() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (T[currentLang]?.[key]) {
+            const val = T[currentLang][key];
+            el.textContent = typeof val === 'function' ? val() : val;
+        }
+    });
+    document.querySelectorAll('[data-i18n-opt]').forEach(el => {
+        const key = el.getAttribute('data-i18n-opt');
+        if (T[currentLang]?.[key]) el.textContent = T[currentLang][key];
+    });
+    // Model hint
+    const sel = document.getElementById('modelSelect');
+    if (sel) {
+        const hints = { small: t('model_hint_small'), medium: t('model_hint_medium'), 'large-v3': t('model_hint_large') };
+        document.getElementById('modelHint').textContent = hints[sel.value] || '';
+    }
+}
+
+// ── App logic ──────────────────────────────────────────
 const uploadArea = document.getElementById('uploadArea');
 const fileInput = document.getElementById('fileInput');
 const jobsList = document.getElementById('jobsList');
-
-// Data cache per job
 const jobData = {};
 
-// Drag & Drop
+const transLangNames = {
+    cs: 'Čeština', sk: 'Slovenština', en: 'English',
+    de: 'Deutsch', pl: 'Polski', hu: 'Magyar', ro: 'Română'
+};
+
 uploadArea.addEventListener('click', () => fileInput.click());
-uploadArea.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    uploadArea.classList.add('dragover');
-});
-uploadArea.addEventListener('dragleave', () => {
-    uploadArea.classList.remove('dragover');
-});
-uploadArea.addEventListener('drop', (e) => {
-    e.preventDefault();
-    uploadArea.classList.remove('dragover');
-    if (e.dataTransfer.files.length > 0) {
-        uploadFiles(e.dataTransfer.files);
-    }
-});
-fileInput.addEventListener('change', () => {
-    if (fileInput.files.length > 0) {
-        uploadFiles(fileInput.files);
-    }
-});
+uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+uploadArea.addEventListener('drop', (e) => { e.preventDefault(); uploadArea.classList.remove('dragover'); if (e.dataTransfer.files.length > 0) uploadFiles(e.dataTransfer.files); });
+fileInput.addEventListener('change', () => { if (fileInput.files.length > 0) uploadFiles(fileInput.files); });
 
 async function uploadFiles(files) {
     const formData = new FormData();
-    for (const file of files) {
-        formData.append('files', file);
-    }
+    for (const file of files) formData.append('files', file);
     formData.append('model', document.getElementById('modelSelect').value);
-
     try {
         const resp = await fetch('/upload', { method: 'POST', body: formData });
         const data = await resp.json();
-        for (const job of data.jobs) {
-            createJobCard(job.id, job.filename);
-            pollJobStatus(job.id);
-        }
-    } catch (err) {
-        alert('Chyba při nahrávání: ' + err.message);
-    }
+        for (const job of data.jobs) { createJobCard(job.id, job.filename); pollJobStatus(job.id); }
+    } catch (err) { alert(t('upload_error') + ': ' + err.message); }
     fileInput.value = '';
 }
 
@@ -171,16 +271,12 @@ function createJobCard(jobId, filename) {
         <div class="job-header">
             <span class="job-filename">${escapeHtml(filename)}</span>
             <div style="display:flex; gap:8px; align-items:center;">
-                <span class="job-status queued" id="status-${jobId}">Ve frontě</span>
-                <button class="btn-delete" onclick="deleteJob('${jobId}')" title="Smazat">X</button>
+                <span class="job-status queued" id="status-${jobId}">${t('queued')}</span>
+                <button class="btn-delete" onclick="deleteJob('${jobId}')" title="X">X</button>
             </div>
         </div>
-        <div class="progress-bar">
-            <div class="progress-fill" id="progress-${jobId}" style="width: 0%"></div>
-        </div>
-        <div id="progress-text-${jobId}" style="font-size:12px;color:#64748b;margin-bottom:10px;">
-            Čekání na zpracování...
-        </div>
+        <div class="progress-bar"><div class="progress-fill" id="progress-${jobId}" style="width: 0%"></div></div>
+        <div id="progress-text-${jobId}" style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">${t('waiting')}</div>
         <div id="results-${jobId}" class="results-area" style="display:none;"></div>
     `;
     jobsList.prepend(card);
@@ -191,28 +287,20 @@ function pollJobStatus(jobId) {
         try {
             const resp = await fetch(`/status/${jobId}`);
             const data = await resp.json();
-
             const statusEl = document.getElementById(`status-${jobId}`);
             const progressEl = document.getElementById(`progress-${jobId}`);
             const progressText = document.getElementById(`progress-text-${jobId}`);
-
             progressEl.style.width = data.progress + '%';
-
             if (data.status === 'processing') {
-                statusEl.className = 'job-status processing';
-                statusEl.textContent = 'Zpracovávám';
-                progressText.textContent = `Přepisuji... ${data.progress}%`;
+                statusEl.className = 'job-status processing'; statusEl.textContent = t('processing');
+                progressText.textContent = `${t('transcribing')} ${data.progress}%`;
             } else if (data.status === 'done') {
-                statusEl.className = 'job-status done';
-                statusEl.textContent = 'Hotovo';
-                progressText.textContent = `Dokončeno - ${data.segment_count} segmentů`;
-                clearInterval(interval);
-                showResults(jobId);
+                statusEl.className = 'job-status done'; statusEl.textContent = t('done');
+                progressText.textContent = t('done_segments', data.segment_count);
+                clearInterval(interval); showResults(jobId);
             } else if (data.status === 'error') {
-                statusEl.className = 'job-status error';
-                statusEl.textContent = 'Chyba';
-                progressText.textContent = `Chyba: ${data.error}`;
-                clearInterval(interval);
+                statusEl.className = 'job-status error'; statusEl.textContent = t('error');
+                progressText.textContent = `${t('error')}: ${data.error}`; clearInterval(interval);
             }
         } catch (err) { /* retry */ }
     }, 1500);
@@ -222,80 +310,50 @@ async function showResults(jobId) {
     const resp = await fetch(`/result/${jobId}`);
     const data = await resp.json();
     const resultsDiv = document.getElementById(`results-${jobId}`);
-
-    // Uložit data
-    jobData[jobId] = {
-        segments: data.segments,
-        health_claims: data.health_claims
-    };
+    jobData[jobId] = { segments: data.segments, health_claims: data.health_claims };
 
     resultsDiv.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-            <h4 style="margin:0; color:var(--text-primary);">Přepis textu <span style="font-weight:400; font-size:12px; color:var(--text-muted);">(klikněte na text pro úpravu)</span></h4>
+            <h4 style="margin:0; color:var(--text-primary);">${t('transcript_title')} <span style="font-weight:400; font-size:12px; color:var(--text-muted);">${t('click_to_edit')}</span></h4>
             <div style="display:flex; gap:8px; align-items:center;">
-                <button class="btn btn-success" onclick="saveEdits('${jobId}')" id="save-btn-${jobId}" style="display:none;">
-                    Uložit změny
-                </button>
-                <button class="btn btn-primary" onclick="saveProject('${jobId}')">
-                    Ulozit upravy
-                </button>
+                <button class="btn btn-success" onclick="saveEdits('${jobId}')" id="save-btn-${jobId}" style="display:none;">${t('save_changes')}</button>
+                <button class="btn btn-primary" onclick="saveProject('${jobId}')">${t('save_project')}</button>
             </div>
         </div>
-
-        <div class="search-bar" id="search-bar-${jobId}">
-            <input type="text" id="search-input-${jobId}" placeholder="Hledat v prepisu..." onkeydown="if(event.key==='Enter') searchInTranscript('${jobId}')">
-            <button class="btn btn-dark" onclick="searchInTranscript('${jobId}')">Hledat</button>
-            <button class="btn btn-orange" onclick="markSearchAsClaim('${jobId}')">Oznacit cervene</button>
+        <div class="search-bar">
+            <input type="text" id="search-input-${jobId}" placeholder="${t('search_placeholder')}" onkeydown="if(event.key==='Enter') searchInTranscript('${jobId}')">
+            <button class="btn btn-dark" onclick="searchInTranscript('${jobId}')">${t('search_btn')}</button>
+            <button class="btn btn-orange" onclick="markSearchAsClaim('${jobId}')">${t('mark_red')}</button>
             <span class="search-match-count" id="search-count-${jobId}"></span>
         </div>
-
         <div class="transcript-box" id="transcript-${jobId}"></div>
-
         <div id="claims-summary-${jobId}" style="margin:10px 0;"></div>
-
         <div class="actions">
-            <button class="btn btn-primary" onclick="exportFile('${jobId}', 'txt')">
-                Exportovat TXT
-            </button>
-            <button class="btn btn-success" onclick="exportFile('${jobId}', 'pdf')">
-                Exportovat PDF
-            </button>
-            <button class="btn btn-orange" onclick="exportFile('${jobId}', 'srt')">
-                Exportovat SRT titulky
-            </button>
-            <button class="btn btn-purple" onclick="exportZip('${jobId}')">
-                Exportovat vse (ZIP)
-            </button>
+            <button class="btn btn-primary" onclick="exportFile('${jobId}', 'txt')">${t('export_txt')}</button>
+            <button class="btn btn-success" onclick="exportFile('${jobId}', 'pdf')">${t('export_pdf')}</button>
+            <button class="btn btn-orange" onclick="exportFile('${jobId}', 'srt')">${t('export_srt')}</button>
+            <button class="btn btn-purple" onclick="exportZip('${jobId}')">${t('export_zip')}</button>
         </div>
-
         <div class="translate-bar">
-            <span style="font-weight:600; font-size:13px; margin-right:10px;">Přeložit do:</span>
+            <span style="font-weight:600; font-size:13px; margin-right:10px;">${t('translate_to')}</span>
             <label class="lang-check"><input type="checkbox" value="sk" data-job="${jobId}"> SK</label>
             <label class="lang-check"><input type="checkbox" value="en" data-job="${jobId}"> EN</label>
             <label class="lang-check"><input type="checkbox" value="de" data-job="${jobId}"> DE</label>
             <label class="lang-check"><input type="checkbox" value="pl" data-job="${jobId}"> PL</label>
             <label class="lang-check"><input type="checkbox" value="hu" data-job="${jobId}"> HU</label>
             <label class="lang-check"><input type="checkbox" value="ro" data-job="${jobId}"> RO</label>
-            <button class="btn btn-purple" onclick="translateJobMulti('${jobId}')" style="margin-left:10px;">
-                Přeložit vybrané
-            </button>
+            <button class="btn btn-purple" onclick="translateJobMulti('${jobId}')" style="margin-left:10px;">${t('translate_btn')}</button>
             <span id="translate-status-${jobId}" style="font-size:12px; color:var(--text-muted); margin-left:8px;"></span>
         </div>
-
         <div id="translations-${jobId}"></div>
     `;
-
     renderSegments(jobId);
     resultsDiv.style.display = 'block';
 }
 
 function highlightClaims(text, claims) {
-    // Najdi fráze z claims které se vyskytují v tomto segmentu
-    // a vlož kolem nich <mark> tag
     let result = escapeHtml(text);
     const textLower = text.toLowerCase();
-
-    // Sesbírat všechny nálezy v tomto segmentu
     let highlights = [];
     for (const claim of claims) {
         const claimLower = claim.text.toLowerCase();
@@ -303,405 +361,196 @@ function highlightClaims(text, claims) {
         while (true) {
             const idx = textLower.indexOf(claimLower, searchFrom);
             if (idx === -1) break;
-            highlights.push({
-                start: idx,
-                end: idx + claim.text.length,
-                reason: claim.reason
-            });
+            highlights.push({ start: idx, end: idx + claim.text.length, reason: claim.reason });
             searchFrom = idx + 1;
         }
     }
-
     if (highlights.length === 0) return { html: result, count: 0 };
-
-    // Seřadit od konce aby replace neposouval indexy
     highlights.sort((a, b) => b.start - a.start);
-
-    // Odstranit překryvy (nechat delší)
     let filtered = [];
-    for (const h of highlights) {
-        if (!filtered.some(f => h.start < f.end && h.end > f.start)) {
-            filtered.push(h);
-        }
-    }
+    for (const h of highlights) { if (!filtered.some(f => h.start < f.end && h.end > f.start)) filtered.push(h); }
     filtered.sort((a, b) => b.start - a.start);
-
-    // Vložit <mark> tagy (pracujeme s originálním textem, pak escapujeme po částech)
     let parts = [];
     let lastEnd = text.length;
     for (const h of filtered) {
-        // Text za highlightem
-        if (h.end < lastEnd) {
-            parts.unshift({ text: text.substring(h.end, lastEnd), highlight: false });
-        }
+        if (h.end < lastEnd) parts.unshift({ text: text.substring(h.end, lastEnd), highlight: false });
         parts.unshift({ text: text.substring(h.start, h.end), highlight: true, reason: h.reason });
         lastEnd = h.start;
     }
-    if (lastEnd > 0) {
-        parts.unshift({ text: text.substring(0, lastEnd), highlight: false });
-    }
-
+    if (lastEnd > 0) parts.unshift({ text: text.substring(0, lastEnd), highlight: false });
     result = parts.map(p => {
         const escaped = escapeHtml(p.text);
-        if (p.highlight) {
-            return `<mark class="health-mark" title="${escapeHtml(p.reason)}">${escaped}</mark>`;
-        }
-        return escaped;
+        return p.highlight ? `<mark class="health-mark" title="${escapeHtml(p.reason)}">${escaped}</mark>` : escaped;
     }).join('');
-
     return { html: result, count: filtered.length };
 }
 
 function renderSegments(jobId) {
     const container = document.getElementById(`transcript-${jobId}`);
     const { segments, health_claims } = jobData[jobId];
-
     container.innerHTML = '';
-
     for (let i = 0; i < segments.length; i++) {
         const seg = segments[i];
         const ts = formatTimestamp(seg.start) + ' - ' + formatTimestamp(seg.end);
-
-        const { html: highlightedHtml, count: claimCount } = highlightClaims(seg.text, health_claims);
-
-        // Apply search highlighting on top of claim highlighting
+        const { html: highlightedHtml } = highlightClaims(seg.text, health_claims);
         const searchQuery = jobData[jobId].searchQuery || '';
         const { html: finalHtml } = applySearchHighlight(highlightedHtml, searchQuery);
-
         const row = document.createElement('div');
-        row.className = 'segment';
-        row.dataset.index = i;
-
-        let html = `<span class="timestamp">[${ts}]</span>`;
-        html += `<span class="seg-text" contenteditable="true" data-job="${jobId}" data-idx="${i}">${finalHtml}</span>`;
-
-        row.innerHTML = html;
+        row.className = 'segment'; row.dataset.index = i;
+        row.innerHTML = `<span class="timestamp">[${ts}]</span><span class="seg-text" contenteditable="true" data-job="${jobId}" data-idx="${i}">${finalHtml}</span>`;
         container.appendChild(row);
-
-        const textSpan = row.querySelector('.seg-text');
-        textSpan.addEventListener('input', () => {
+        row.querySelector('.seg-text').addEventListener('input', () => {
             document.getElementById(`save-btn-${jobId}`).style.display = 'inline-flex';
-            textSpan.classList.add('edited');
+            row.querySelector('.seg-text').classList.add('edited');
         });
     }
-
     renderClaimsSummary(jobId);
 }
 
 function renderClaimsSummary(jobId) {
     const summaryDiv = document.getElementById(`claims-summary-${jobId}`);
     const { health_claims } = jobData[jobId];
-
-    if (health_claims.length === 0) {
-        summaryDiv.innerHTML = '';
-        return;
-    }
-
-    let html = `<div class="claims-panel">
-        <h4 style="margin:0 0 10px;">Nalezeno ${health_claims.length} oznacenych vyrazu:</h4>`;
-
+    if (health_claims.length === 0) { summaryDiv.innerHTML = ''; return; }
+    let html = `<div class="claims-panel"><h4 style="margin:0 0 10px;">${t('marked_count', health_claims.length)}</h4>`;
     for (const claim of health_claims) {
-        html += `<div class="claim-item">
-            <span class="claim-reason">${escapeHtml(claim.reason)}</span>
-            <p class="claim-text">"${escapeHtml(claim.text.substring(0, 150))}${claim.text.length > 150 ? '...' : ''}"</p>
-        </div>`;
+        html += `<div class="claim-item"><span class="claim-reason">${escapeHtml(claim.reason)}</span>
+            <p class="claim-text">"${escapeHtml(claim.text.substring(0, 150))}${claim.text.length > 150 ? '...' : ''}"</p></div>`;
     }
-
-    html += '</div>';
-    summaryDiv.innerHTML = html;
+    summaryDiv.innerHTML = html + '</div>';
 }
 
 async function saveEdits(jobId) {
-    // Sesbírat editovaný text ze všech segmentů
     const textSpans = document.querySelectorAll(`[data-job="${jobId}"].seg-text`);
     const segments = jobData[jobId].segments;
-
-    for (const span of textSpans) {
-        const idx = parseInt(span.dataset.idx);
-        segments[idx].text = span.textContent;
-    }
-
+    for (const span of textSpans) segments[parseInt(span.dataset.idx)].text = span.textContent;
     try {
-        const resp = await fetch(`/save/${jobId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ segments })
-        });
+        const resp = await fetch(`/save/${jobId}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ segments }) });
         const data = await resp.json();
-
         if (data.ok) {
             jobData[jobId].health_claims = data.health_claims;
             document.getElementById(`save-btn-${jobId}`).style.display = 'none';
-
-            // Odstranit "edited" třídu
             textSpans.forEach(s => s.classList.remove('edited'));
-
-            // Přerenderovat s aktualizovanými health claims
             renderSegments(jobId);
-
-            // Vizuální potvrzení
-            const btn = document.getElementById(`save-btn-${jobId}`);
-            const origText = btn.textContent;
-            btn.textContent = 'Uloženo!';
-            btn.style.display = 'inline-flex';
-            setTimeout(() => { btn.style.display = 'none'; btn.textContent = origText; }, 1500);
+            showToast(t('saved'));
         }
-    } catch (err) {
-        alert('Chyba při ukládání: ' + err.message);
-    }
+    } catch (err) { alert(err.message); }
 }
-
-async function recheckClaims(jobId) {
-    // Nejdříve uložit aktuální text
-    const textSpans = document.querySelectorAll(`[data-job="${jobId}"].seg-text`);
-    const segments = jobData[jobId].segments;
-    for (const span of textSpans) {
-        const idx = parseInt(span.dataset.idx);
-        segments[idx].text = span.textContent;
-    }
-
-    try {
-        const resp = await fetch(`/save/${jobId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ segments })
-        });
-        const data = await resp.json();
-
-        if (data.ok) {
-            jobData[jobId].health_claims = data.health_claims;
-            renderSegments(jobId);
-        }
-    } catch (err) {
-        alert('Chyba: ' + err.message);
-    }
-}
-
-const langNames = {
-    cs: 'Čeština', sk: 'Slovenština', en: 'Angličtina',
-    de: 'Němčina', pl: 'Polština', hu: 'Maďarština', ro: 'Rumunština'
-};
 
 async function translateJobMulti(jobId) {
     const checkboxes = document.querySelectorAll(`input[data-job="${jobId}"]:checked`);
     const langs = Array.from(checkboxes).map(cb => cb.value);
-
-    if (langs.length === 0) {
-        alert('Vyberte alespoň jeden jazyk');
-        return;
-    }
-
+    if (langs.length === 0) { alert(t('select_lang')); return; }
     const statusEl = document.getElementById(`translate-status-${jobId}`);
     const translationsDiv = document.getElementById(`translations-${jobId}`);
     translationsDiv.innerHTML = '';
-
-    // Uložit editace před překladem
     await syncSegmentsToServer(jobId);
-
     for (let i = 0; i < langs.length; i++) {
         const lang = langs[i];
-        statusEl.textContent = `Překládám ${langNames[lang]} (${i + 1}/${langs.length})...`;
-
-        const formData = new FormData();
-        formData.append('target_lang', lang);
-
+        statusEl.textContent = t('translating', transLangNames[lang] || lang, i + 1, langs.length);
+        const formData = new FormData(); formData.append('target_lang', lang);
         try {
             const resp = await fetch(`/translate/${jobId}`, { method: 'POST', body: formData });
             const data = await resp.json();
-
-            // Uložit překlad do cache
             if (!jobData[jobId].translations) jobData[jobId].translations = {};
             jobData[jobId].translations[lang] = data.segments;
-
-            let html = `<div class="translation-block" id="trans-${jobId}-${lang}">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin:15px 0 8px;">
-                    <h4 style="margin:0; color:var(--green);">${langNames[lang]}</h4>
-                    <div style="display:flex; gap:6px;">
-                        <button class="btn btn-dark" style="padding:4px 10px; font-size:11px;" onclick="exportTranslated('${jobId}','txt','${lang}')">TXT</button>
-                        <button class="btn btn-dark" style="padding:4px 10px; font-size:11px;" onclick="exportTranslated('${jobId}','pdf','${lang}')">PDF</button>
-                        <button class="btn btn-dark" style="padding:4px 10px; font-size:11px;" onclick="exportTranslated('${jobId}','srt','${lang}')">SRT</button>
-                    </div>
-                </div>
-                <div class="translation-box">`;
-
+            let html = `<div class="translation-block"><div style="display:flex; justify-content:space-between; align-items:center; margin:15px 0 8px;">
+                <h4 style="margin:0; color:var(--green);">${transLangNames[lang] || lang}</h4>
+                <div style="display:flex; gap:6px;">
+                    <button class="btn btn-dark" style="padding:4px 10px; font-size:11px;" onclick="exportTranslated('${jobId}','txt','${lang}')">TXT</button>
+                    <button class="btn btn-dark" style="padding:4px 10px; font-size:11px;" onclick="exportTranslated('${jobId}','pdf','${lang}')">PDF</button>
+                    <button class="btn btn-dark" style="padding:4px 10px; font-size:11px;" onclick="exportTranslated('${jobId}','srt','${lang}')">SRT</button>
+                </div></div><div class="translation-box">`;
             for (const seg of data.segments) {
                 const ts = formatTimestamp(seg.start) + ' - ' + formatTimestamp(seg.end);
-                html += `<div class="segment">
-                    <span class="timestamp">[${ts}]</span>${escapeHtml(seg.text)}
-                </div>`;
+                html += `<div class="segment"><span class="timestamp">[${ts}]</span>${escapeHtml(seg.text)}</div>`;
             }
-
-            html += '</div></div>';
-            translationsDiv.innerHTML += html;
-        } catch (err) {
-            translationsDiv.innerHTML += `<p style="color:red;padding:10px;">Chyba překladu ${langNames[lang]}: ${err.message}</p>`;
-        }
+            translationsDiv.innerHTML += html + '</div></div>';
+        } catch (err) { translationsDiv.innerHTML += `<p style="color:var(--red);padding:10px;">${t('error')}: ${err.message}</p>`; }
     }
-
-    statusEl.textContent = `Hotovo - ${langs.length} jazyků přeloženo`;
+    statusEl.textContent = t('translated_done', langs.length);
     setTimeout(() => statusEl.textContent = '', 3000);
 }
 
 async function syncSegmentsToServer(jobId) {
     const textSpans = document.querySelectorAll(`[data-job="${jobId}"].seg-text`);
     if (textSpans.length === 0) return;
-
     const segments = jobData[jobId].segments;
-    for (const span of textSpans) {
-        const idx = parseInt(span.dataset.idx);
-        segments[idx].text = span.textContent;
-    }
-
-    await fetch(`/save/${jobId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ segments })
-    });
+    for (const span of textSpans) segments[parseInt(span.dataset.idx)].text = span.textContent;
+    await fetch(`/save/${jobId}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ segments }) });
 }
 
 async function deleteJob(jobId) {
     const card = document.getElementById(`job-${jobId}`);
-    if (card) {
-        card.style.opacity = '0.5';
-        await fetch(`/delete/${jobId}`, { method: 'POST' });
-        card.remove();
-        delete jobData[jobId];
-    }
+    if (card) { card.style.opacity = '0.5'; await fetch(`/delete/${jobId}`, { method: 'POST' }); card.remove(); delete jobData[jobId]; }
 }
 
 function downloadFile(url, filename) {
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename || '';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-
-    // Zobrazit notifikaci
-    showToast(`Stazeno: ${filename || 'soubor'}`);
+    const a = document.createElement('a'); a.href = url; a.download = filename || '';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    showToast(t('downloaded', filename || 'file'));
 }
 
 function showToast(message) {
     let toast = document.getElementById('toast');
-    if (!toast) {
-        toast = document.createElement('div');
-        toast.id = 'toast';
-        document.body.appendChild(toast);
-    }
-    toast.textContent = message;
-    toast.className = 'toast show';
+    if (!toast) { toast = document.createElement('div'); toast.id = 'toast'; document.body.appendChild(toast); }
+    toast.textContent = message; toast.className = 'toast show';
     setTimeout(() => toast.className = 'toast', 2500);
 }
 
-async function exportFile(jobId, format) {
-    await syncSegmentsToServer(jobId);
-    const name = (jobData[jobId]?.segments?.[0] ? jobId : jobId) + '.' + format;
-    downloadFile(`/export/${jobId}?format=${format}&lang=original`, name);
-}
-
-async function exportTranslated(jobId, format, lang) {
-    const name = jobId + '_' + lang + '.' + format;
-    downloadFile(`/export/${jobId}?format=${format}&lang=${lang}`, name);
-}
+async function exportFile(jobId, format) { await syncSegmentsToServer(jobId); downloadFile(`/export/${jobId}?format=${format}&lang=original`, jobId + '.' + format); }
+async function exportTranslated(jobId, format, lang) { downloadFile(`/export/${jobId}?format=${format}&lang=${lang}`, jobId + '_' + lang + '.' + format); }
 
 function formatTimestamp(seconds) {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = Math.floor(seconds % 60);
+    const h = Math.floor(seconds / 3600), m = Math.floor((seconds % 3600) / 60), s = Math.floor(seconds % 60);
     return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
 
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
+function escapeHtml(text) { const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
 
-// Settings panel
+// Settings
 async function toggleSettings() {
     const panel = document.getElementById('settingsPanel');
     if (panel.style.display === 'none') {
         panel.style.display = 'block';
-        // Načíst slovník a jména
-        const [dictResp, namesResp] = await Promise.all([
-            fetch('/dictionary'),
-            fetch('/names')
-        ]);
-        const dictData = await dictResp.json();
-        const namesData = await namesResp.json();
-        document.getElementById('dictionaryEditor').value = dictData.content;
-        document.getElementById('namesEditor').value = namesData.content;
-    } else {
-        panel.style.display = 'none';
-    }
+        const [dictResp, namesResp] = await Promise.all([fetch('/dictionary'), fetch('/names')]);
+        document.getElementById('dictionaryEditor').value = (await dictResp.json()).content;
+        document.getElementById('namesEditor').value = (await namesResp.json()).content;
+    } else panel.style.display = 'none';
 }
 
 async function saveSettings() {
-    const dictContent = document.getElementById('dictionaryEditor').value;
-    const namesContent = document.getElementById('namesEditor').value;
-
     await Promise.all([
-        fetch('/dictionary', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ content: dictContent })
-        }),
-        fetch('/names', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ content: namesContent })
-        })
+        fetch('/dictionary', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content: document.getElementById('dictionaryEditor').value }) }),
+        fetch('/names', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content: document.getElementById('namesEditor').value }) })
     ]);
-
-    const saved = document.getElementById('settingsSaved');
-    saved.style.display = 'inline';
+    const saved = document.getElementById('settingsSaved'); saved.style.display = 'inline';
     setTimeout(() => saved.style.display = 'none', 2000);
 }
 
-// Search in transcript
+// Search
 function searchInTranscript(jobId) {
     const query = document.getElementById(`search-input-${jobId}`).value.trim();
     const countEl = document.getElementById(`search-count-${jobId}`);
-
-    // Store current search query
     if (!jobData[jobId]) return;
     jobData[jobId].searchQuery = query;
-
-    if (!query) {
-        jobData[jobId].searchQuery = '';
-        countEl.textContent = '';
-        renderSegments(jobId);
-        return;
-    }
-
+    if (!query) { jobData[jobId].searchQuery = ''; countEl.textContent = ''; renderSegments(jobId); return; }
     renderSegments(jobId);
-
-    // Count matches
-    const matches = document.querySelectorAll(`#transcript-${jobId} .search-match`);
-    countEl.textContent = `Nalezeno: ${matches.length}`;
+    countEl.textContent = t('found', document.querySelectorAll(`#transcript-${jobId} .search-match`).length);
 }
 
 function applySearchHighlight(html, query) {
     if (!query) return { html, count: 0 };
-    // We need to highlight query in the html without breaking existing tags
-    const queryLower = query.toLowerCase();
-    let count = 0;
-    // Split by tags, only highlight in text parts
+    const queryLower = query.toLowerCase(); let count = 0;
     const parts = html.split(/(<[^>]+>)/);
     for (let i = 0; i < parts.length; i++) {
-        if (parts[i].startsWith('<')) continue; // skip tags
-        const textLower = parts[i].toLowerCase();
-        let result = '';
-        let lastIdx = 0;
-        let idx;
+        if (parts[i].startsWith('<')) continue;
+        const textLower = parts[i].toLowerCase(); let result = '', lastIdx = 0, idx;
         while ((idx = textLower.indexOf(queryLower, lastIdx)) !== -1) {
             result += parts[i].substring(lastIdx, idx);
             result += `<span class="search-match">${parts[i].substring(idx, idx + query.length)}</span>`;
-            lastIdx = idx + query.length;
-            count++;
+            lastIdx = idx + query.length; count++;
         }
-        result += parts[i].substring(lastIdx);
-        parts[i] = result;
+        result += parts[i].substring(lastIdx); parts[i] = result;
     }
     return { html: parts.join(''), count };
 }
@@ -709,123 +558,63 @@ function applySearchHighlight(html, query) {
 async function markSearchAsClaim(jobId) {
     const input = document.getElementById(`search-input-${jobId}`);
     const query = input ? input.value.trim() : '';
-    if (!query) {
-        alert('Nejdrive zadejte hledany text do vyhledavaciho pole');
-        return;
-    }
-
-    // Nejdříve uložit aktuální editace
+    if (!query) { alert(t('enter_search')); return; }
     await syncSegmentsToServer(jobId);
-
     try {
-        const resp = await fetch(`/mark-claim/${jobId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: query, reason: 'rucne oznaceno' })
-        });
-
-        if (!resp.ok) {
-            const err = await resp.json();
-            alert('Chyba: ' + (err.error || 'neznama chyba'));
-            return;
-        }
-
+        const resp = await fetch(`/mark-claim/${jobId}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: query, reason: 'manually marked' }) });
+        if (!resp.ok) { alert(t('error')); return; }
         const data = await resp.json();
-        jobData[jobId].health_claims = data.health_claims;
-        jobData[jobId].searchQuery = '';
-        input.value = '';
-        document.getElementById(`search-count-${jobId}`).textContent = '';
-        renderSegments(jobId);
-        showToast(`"${query}" oznaceno cervene`);
-    } catch (err) {
-        alert('Chyba pri oznacovani: ' + err.message);
-    }
+        jobData[jobId].health_claims = data.health_claims; jobData[jobId].searchQuery = '';
+        input.value = ''; document.getElementById(`search-count-${jobId}`).textContent = '';
+        renderSegments(jobId); showToast(t('marked_red', query));
+    } catch (err) { alert(err.message); }
 }
 
-// Export ZIP
+// ZIP
 async function exportZip(jobId) {
     await syncSegmentsToServer(jobId);
-    const translations = jobData[jobId]?.translations || {};
-    const langs = Object.keys(translations);
-    let url = `/export-zip/${jobId}`;
-    if (langs.length > 0) {
-        url += '?langs=' + langs.join(',');
-    }
+    const langs = Object.keys(jobData[jobId]?.translations || {});
+    let url = `/export-zip/${jobId}`; if (langs.length > 0) url += '?langs=' + langs.join(',');
     downloadFile(url, 'export.zip');
-}
-
-// Claims report
-async function downloadClaimsReport(jobId) {
-    downloadFile(`/report/${jobId}`, `report_${jobId}.pdf`);
 }
 
 // Projects
 async function toggleProjects() {
     const panel = document.getElementById('projectsPanel');
-    if (panel.style.display === 'none') {
-        panel.style.display = 'block';
-        await loadProjectsList();
-    } else {
-        panel.style.display = 'none';
-    }
+    if (panel.style.display === 'none') { panel.style.display = 'block'; await loadProjectsList(); }
+    else panel.style.display = 'none';
 }
 
 async function loadProjectsList() {
     const listDiv = document.getElementById('projectsList');
     try {
-        const resp = await fetch('/projects');
-        const data = await resp.json();
+        const resp = await fetch('/projects'); const data = await resp.json();
         const projects = data.projects || data || [];
-
-        if (projects.length === 0) {
-            listDiv.innerHTML = '<p style="color:var(--text-muted);">Zadne ulozene projekty.</p>';
-            return;
-        }
-
+        if (projects.length === 0) { listDiv.innerHTML = `<p style="color:var(--text-muted);">${t('no_projects')}</p>`; return; }
         let html = '';
         for (const proj of projects) {
             html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border);">
-                <div>
-                    <span style="color:var(--text-primary); font-weight:500;">${escapeHtml(proj.name || proj.filename || proj.id)}</span>
-                    <span style="color:var(--text-muted); font-size:11px; margin-left:8px;">${proj.date || ''}</span>
-                </div>
-                <button class="btn btn-primary" style="padding:4px 12px; font-size:12px;" onclick="loadProject('${proj.id}')">Nacist</button>
+                <div><span style="color:var(--text-primary); font-weight:500;">${escapeHtml(proj.name || proj.filename || proj.id)}</span>
+                <span style="color:var(--text-muted); font-size:11px; margin-left:8px;">${proj.date || proj.saved_date || ''}</span></div>
+                <button class="btn btn-primary" style="padding:4px 12px; font-size:12px;" onclick="loadProject('${escapeHtml(proj.path || proj.id)}')">${t('load_btn')}</button>
             </div>`;
         }
         listDiv.innerHTML = html;
-    } catch (err) {
-        listDiv.innerHTML = '<p style="color:var(--red);">Chyba pri nacitani projektu.</p>';
-    }
+    } catch (err) { listDiv.innerHTML = `<p style="color:var(--red);">${t('error')}</p>`; }
 }
 
-async function loadProject(projectId) {
+async function loadProject(projectPath) {
     try {
-        const resp = await fetch(`/project/load`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: projectId })
-        });
+        const resp = await fetch('/project/load', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path: projectPath }) });
         const data = await resp.json();
-
         if (data.job_id) {
-            createJobCard(data.job_id, data.filename || 'Nacten projekt');
-            // Set status to done
-            const statusEl = document.getElementById(`status-${data.job_id}`);
-            if (statusEl) {
-                statusEl.className = 'job-status done';
-                statusEl.textContent = 'Hotovo';
-            }
-            const progressEl = document.getElementById(`progress-${data.job_id}`);
-            if (progressEl) progressEl.style.width = '100%';
-            const progressText = document.getElementById(`progress-text-${data.job_id}`);
-            if (progressText) progressText.textContent = 'Nacten z projektu';
-
-            showResults(data.job_id);
-            showToast('Projekt nacten');
+            createJobCard(data.job_id, data.filename || t('project_loaded'));
+            const s = document.getElementById(`status-${data.job_id}`); if (s) { s.className = 'job-status done'; s.textContent = t('done'); }
+            const p = document.getElementById(`progress-${data.job_id}`); if (p) p.style.width = '100%';
+            const pt = document.getElementById(`progress-text-${data.job_id}`); if (pt) pt.textContent = t('loaded_from_project');
+            showResults(data.job_id); showToast(t('project_loaded'));
         }
-    } catch (err) {
-        alert('Chyba pri nacitani projektu: ' + err.message);
-    }
+    } catch (err) { alert(err.message); }
 }
 
 async function saveProject(jobId) {
@@ -833,25 +622,18 @@ async function saveProject(jobId) {
     try {
         const resp = await fetch(`/project/save/${jobId}`, { method: 'POST' });
         const data = await resp.json();
-        if (data.ok) {
-            showToast('Projekt ulozen');
-        } else {
-            showToast(data.error || 'Chyba pri ukladani');
-        }
-    } catch (err) {
-        alert('Chyba: ' + err.message);
-    }
+        showToast(data.ok ? t('project_saved') : (data.error || t('error')));
+    } catch (err) { alert(err.message); }
 }
 
 // Model hint
 document.getElementById('modelSelect').addEventListener('change', function() {
-    const hints = {
-        'small': 'Rychlejší, ale horší čeština',
-        'medium': 'Doporučeno - dobrá čeština',
-        'large-v3': 'Nejlepší přesnost, vyžaduje hodně RAM a času'
-    };
+    const hints = { small: t('model_hint_small'), medium: t('model_hint_medium'), 'large-v3': t('model_hint_large') };
     document.getElementById('modelHint').textContent = hints[this.value] || '';
 });
+
+// Init language on load
+applyI18n();
 </script>
 
 </body>
