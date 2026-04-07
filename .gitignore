@@ -6,4 +6,4 @@ outputs/*
 !outputs/.gitkeep
 projects/*
 !projects/.gitkeep
-*.ico
+static/favicon.ico
