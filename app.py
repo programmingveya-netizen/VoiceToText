@@ -19,7 +19,6 @@ from fastapi.templating import Jinja2Templates
 
 import uvicorn
 
-from health_checker import find_health_claims
 from translator import translate_segments, LANGUAGE_NAMES
 from exporter import export_txt, export_pdf, export_srt
 
@@ -185,14 +184,8 @@ def process_file(file_path: str, original_name: str, job_id: str):
 
         jobs[job_id]["progress"] = 95
 
-        # Detekce zdravotních tvrzení per-segment
-        health_claims = []
-        for seg in segments:
-            seg_claims = find_health_claims(seg["text"])
-            health_claims.extend(seg_claims)
-
         jobs[job_id]["segments"] = segments
-        jobs[job_id]["health_claims"] = health_claims
+        jobs[job_id]["health_claims"] = []
         jobs[job_id]["status"] = "done"
         jobs[job_id]["progress"] = 100
 
@@ -296,14 +289,9 @@ async def save_segments(job_id: str, request: Request):
     segments = data.get("segments", [])
     jobs[job_id]["segments"] = segments
 
-    # Přepočítat automatická zdravotní tvrzení po editaci (per-segment)
-    auto_claims = []
-    for seg in segments:
-        auto_claims.extend(find_health_claims(seg["text"]))
-
-    # Zachovat ručně přidané claims
+    # Zachovat ručně označené výrazy
     custom_claims = jobs[job_id].get("custom_claims", [])
-    jobs[job_id]["health_claims"] = auto_claims + custom_claims
+    jobs[job_id]["health_claims"] = custom_claims
 
     return JSONResponse({
         "ok": True,

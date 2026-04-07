@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <strong>Desktop aplikace pro přepis videa a audia na text s detekcí zdravotních tvrzení</strong>
+  <strong>Desktop aplikace pro přepis videa a audia na text s překladem do více jazyků</strong>
 </p>
 
 <p align="center">
@@ -20,14 +20,14 @@
 ## Co aplikace umí
 
 - **Přepis audia/videa na text** s časovými značkami (timestamps)
-- **Automatická detekce zdravotních tvrzení** - závadné fráze zvýrazněny červeně
-- **Ruční označování** - hledání v textu + možnost označit vlastní výrazy
 - **Editace přepisu** přímo v aplikaci (oprava jmen, překlepů)
+- **Hledání v textu** s možností červeně zvýraznit důležité výrazy
 - **Překlad** do 7 jazyků (CZ, SK, EN, DE, PL, HU, RO) se zachováním vlastních jmen
 - **Export** do TXT, PDF, SRT (titulky) nebo ZIP se vším
 - **Dávkové zpracování** - více souborů najednou s progress barem
 - **Ukládání projektů** - práce se neztratí po restartu
 - **Auto-detekce GPU** - na PC s NVIDIA automaticky využije CUDA
+- **Dark mode UI**
 
 ## Screenshot
 
@@ -61,16 +61,16 @@ Video/Audio  ──>  Whisper AI  ──>  Text s timestamps
                                         │
                     ┌───────────────────┤
                     │                    │
-             Detekce zdravotních    Editace textu
-             tvrzení (červeně)      (opravy, jména)
+              Hledání a             Editace textu
+              zvýraznění            (opravy, jména)
                     │                    │
                     └───────────────────┤
                                         │
                          ┌──────────────┼──────────────┐
                          │              │              │
-                      Export         Překlad        Report
-                   TXT/PDF/SRT    7 jazyků       zdravotních
-                      /ZIP       + SRT titulky     tvrzení
+                      Export         Překlad        Uložení
+                   TXT/PDF/SRT    7 jazyků         projektu
+                      /ZIP       + SRT titulky
 ```
 
 ## Funkce podrobně
@@ -81,12 +81,10 @@ Video/Audio  ──>  Whisper AI  ──>  Text s timestamps
 - Automatické sloučení do vět (ne po slovech)
 - Slovník oprav pro automatickou korekci častých chyb
 
-### Detekce zdravotních tvrzení
-Automaticky detekuje fráze typu:
-- *"pomáhá při onemocnění"*, *"na léčbu"*, *"je vhodné při diagnóze"*
-- *"přírodní lék"*, *"bez vedlejších účinků"*, *"klinicky prokázáno"*
-- Kombinace produkt + nemoc (*"vitamín C léčí rakovinu"*)
-- Možnost ručního označení vlastních výrazů přes vyhledávání
+### Hledání a zvýraznění
+- Vyhledávání v celém přepisu
+- Nalezené výrazy zvýrazněny žlutě
+- Možnost trvale označit výrazy červeně (zvýraznění se přenese do PDF exportu)
 
 ### Překlad
 - 7 cílových jazyků najednou
@@ -97,10 +95,9 @@ Automaticky detekuje fráze typu:
 | Formát | Popis |
 |--------|-------|
 | **TXT** | Čistý text s timestamps `[00:01:23 - 00:01:45]` |
-| **PDF** | Formátovaný dokument, zdravotní tvrzení červeně |
+| **PDF** | Formátovaný dokument, označené výrazy červeně |
 | **SRT** | Titulky pro import do video editoru |
 | **ZIP** | Vše najednou včetně všech překladů |
-| **Report** | PDF jen se zdravotními tvrzeními + kde ve videu |
 
 ## Technologie
 
@@ -118,7 +115,6 @@ Automaticky detekuje fráze typu:
 ```
 VoiceToText/
 ├── app.py               # Hlavní aplikace (FastAPI server)
-├── health_checker.py     # Detekce zdravotních tvrzení
 ├── translator.py         # Překlad s ochranou jmen
 ├── exporter.py           # Export do TXT, PDF, SRT
 ├── dictionary.txt        # Slovník oprav (editovatelný)

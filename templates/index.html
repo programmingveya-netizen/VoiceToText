@@ -206,9 +206,6 @@ function pollJobStatus(jobId) {
                 statusEl.className = 'job-status done';
                 statusEl.textContent = 'Hotovo';
                 progressText.textContent = `Dokončeno - ${data.segment_count} segmentů`;
-                if (data.claim_count > 0) {
-                    progressText.textContent += `, ${data.claim_count} zdravotních tvrzení`;
-                }
                 clearInterval(interval);
                 showResults(jobId);
             } else if (data.status === 'error') {
@@ -239,9 +236,6 @@ async function showResults(jobId) {
                 <button class="btn btn-success" onclick="saveEdits('${jobId}')" id="save-btn-${jobId}" style="display:none;">
                     Uložit změny
                 </button>
-                <button class="btn btn-dark" onclick="recheckClaims('${jobId}')">
-                    Zkontrolovat zdravotní tvrzení
-                </button>
                 <button class="btn btn-primary" onclick="saveProject('${jobId}')">
                     Ulozit upravy
                 </button>
@@ -251,7 +245,7 @@ async function showResults(jobId) {
         <div class="search-bar" id="search-bar-${jobId}">
             <input type="text" id="search-input-${jobId}" placeholder="Hledat v prepisu..." onkeydown="if(event.key==='Enter') searchInTranscript('${jobId}')">
             <button class="btn btn-dark" onclick="searchInTranscript('${jobId}')">Hledat</button>
-            <button class="btn btn-orange" onclick="markSearchAsClaim('${jobId}')">Oznacit jako zdravotni tvrzeni</button>
+            <button class="btn btn-orange" onclick="markSearchAsClaim('${jobId}')">Oznacit cervene</button>
             <span class="search-match-count" id="search-count-${jobId}"></span>
         </div>
 
@@ -271,9 +265,6 @@ async function showResults(jobId) {
             </button>
             <button class="btn btn-purple" onclick="exportZip('${jobId}')">
                 Exportovat vse (ZIP)
-            </button>
-            <button class="btn btn-dark" onclick="downloadClaimsReport('${jobId}')">
-                Stahnout report tvrzeni
             </button>
         </div>
 
@@ -402,12 +393,12 @@ function renderClaimsSummary(jobId) {
     const { health_claims } = jobData[jobId];
 
     if (health_claims.length === 0) {
-        summaryDiv.innerHTML = '<p style="color:var(--green); font-size:13px; padding:8px 0;">Nebyla nalezena žádná zdravotní tvrzení.</p>';
+        summaryDiv.innerHTML = '';
         return;
     }
 
     let html = `<div class="claims-panel">
-        <h4 style="margin:0 0 10px;">Nalezeno ${health_claims.length} zdravotních tvrzení:</h4>`;
+        <h4 style="margin:0 0 10px;">Nalezeno ${health_claims.length} oznacenych vyrazu:</h4>`;
 
     for (const claim of health_claims) {
         html += `<div class="claim-item">
@@ -745,7 +736,7 @@ async function markSearchAsClaim(jobId) {
         input.value = '';
         document.getElementById(`search-count-${jobId}`).textContent = '';
         renderSegments(jobId);
-        showToast(`"${query}" oznaceno jako zdravotni tvrzeni`);
+        showToast(`"${query}" oznaceno cervene`);
     } catch (err) {
         alert('Chyba pri oznacovani: ' + err.message);
     }
