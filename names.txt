@@ -1,0 +1,6 @@
+# Seznam vlastnich jmen, ktera se NEPREKLADAJI
+# Jedno jmeno nebo fraze na radek
+# Prazdne radky a radky zacinajici # jsou ignorovany
+#
+# Pridejte sem jmena, ktera se v nahravkach vyskytuji:
+Jiří Černota

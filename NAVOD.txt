@@ -1,0 +1,90 @@
+============================================
+  Voice To Text - Navod k pouziti
+============================================
+
+
+INSTALACE (jednorazova):
+------------------------
+1. Dvakrat kliknete na "setup.bat"
+   - Pokud nemate Python, automaticky ho stahne a nainstaluje
+   - Nainstaluje vsechny potrebne knihovny
+   - Stahne jazykovy model pro prepis
+   - Vytvori ikonu "Voice To Text" na plose
+   - Prvni instalace muze trvat 5-10 minut
+
+
+SPUSTENI:
+---------
+Dvakrat kliknete na ikonu "Voice To Text" na plose
+(nebo na "start.bat" ve slozce).
+Pro ukonceni zavrete okno aplikace.
+
+
+POUZITI:
+--------
+1. NAHRANI - Pretahnete video/audio soubory do aplikace
+   (nebo kliknete pro vyber). Lze nahrat vice souboru najednou.
+
+2. PREPIS - Aplikace automaticky prepise nahravku na text.
+   Progress bar ukazuje postup. Model "medium" je doporuceny
+   pro dobrou cestinu.
+
+3. UPRAVA TEXTU - Kliknete na text pro upravu (oprava jmen,
+   preklepu). Zmeny se automaticky ulozi pri exportu.
+
+4. HLEDANI - Pole "Hledat v prepisu" nad textem.
+   Nalezene vysledky se zvyrazni zlute.
+   Tlacitko "Oznacit jako zdravotni tvrzeni" je oznaci cervene.
+
+5. ZDRAVOTNI TVRZENI - Automaticky detekovana a oznacena
+   cervene. Tlacitko "Zkontrolovat zdravotni tvrzeni"
+   prepocita po vaseich upravach.
+
+6. PREKLAD - Zaskrtnete jazyky (SK, EN, DE, PL, HU, RO)
+   a kliknete "Prelozit vybrane". Vlastni jmena se neprekladaji
+   (lze upravit v Nastaveni > Jmena).
+
+7. EXPORT - Tlacitka pro stahnuti:
+   - TXT  = cisty text s casovymi znackami
+   - PDF  = formatovany dokument, zdravotni tvrzeni cervene
+   - SRT  = titulky pro video
+   - ZIP  = vsechno najednou (vcetne prekladu)
+   - Report tvrzeni = PDF jen se zdravotnimi tvrzenimi
+
+8. ULOZENI - Tlacitko "Ulozit upravy" ulozi projekt.
+   Lze nacist pozdeji pres "Ulozene projekty" nahoze.
+
+
+NASTAVENI:
+----------
+Tlacitko "Nastaveni" obsahuje:
+- Slovnik oprav: automaticke opravy pri prepisu
+  (format: chybny text = spravny text)
+- Jmena: jmena ktera se neprekladaji do jinych jazyku
+
+
+PODPOROVANE FORMATY:
+--------------------
+MP3, MP4, WAV, M4A, OGG, FLAC, WEBM, MKV, AVI, MOV
+
+
+PRENESENI NA JINY POCITAC:
+--------------------------
+1. Zkopirujte celou slozku "VoiceToText" na druhy pocitac
+   (napr. na flashku nebo pres sit)
+2. Na novem pocitaci dvakrat kliknete na "setup.bat"
+3. Hotovo - klikejte na ikonu na plose
+
+Poznamka: Slozky uploads, outputs a projects obsahuji
+vase data. Pokud je nechcete prenaset, smazte je pred
+kopiovanim (aplikace si je vytvori znovu).
+
+
+POZNAMKY:
+---------
+- Pokud mate grafickou kartu NVIDIA, prepis bude automaticky
+  vyrazne rychlejsi (aplikace ji rozpozna sama).
+- Model "medium" je doporuceny. "small" je rychlejsi ale
+  mene presny, "large" je nejpresnejsi ale nejpomalejsi.
+- Slovnik oprav a jmena se ukladaji do souboru dictionary.txt
+  a names.txt ve slozce aplikace.

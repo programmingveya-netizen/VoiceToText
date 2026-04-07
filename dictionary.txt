@@ -1,0 +1,8 @@
+# Slovnik oprav pro prepis
+# Format: chybny text = spravny text
+# Kazdy radek jedna oprava, prazdne radky a radky zacinajici # jsou ignorovany
+#
+# Priklady:
+# Jiri Cernota = Jiří Černota
+# esencialni = esenciální
+# zivotniho = životního

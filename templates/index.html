@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice To Text</title>
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .search-match {
+            background: rgba(245, 158, 11, 0.3);
+            border-radius: 3px;
+        }
+        .search-bar {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .search-bar input {
+            flex: 1;
+            min-width: 180px;
+            padding: 6px 12px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+        .search-bar input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .search-match-count {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <img src="/static/icona.png" alt="Voice To Text" class="header-icon">
+    <div>
+        <h1>Voice To Text</h1>
+        <p>Nahrajte video nebo audio soubor a převeďte ho na text</p>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Upload oblast -->
+    <div class="upload-area" id="uploadArea">
+        <div class="icon">&#128190;</div>
+        <h3>Přetáhněte soubory sem nebo klikněte pro výběr</h3>
+        <p>Podporované formáty: MP3, MP4, WAV, M4A, OGG, FLAC, WEBM, MKV, AVI, MOV</p>
+        <p style="margin-top:8px; color:#2563eb; font-weight:600;">Lze nahrát více souborů najednou</p>
+        <input type="file" id="fileInput" multiple
+               accept=".mp3,.mp4,.wav,.m4a,.ogg,.flac,.webm,.mkv,.avi,.mov">
+    </div>
+
+    <!-- Volba modelu -->
+    <div class="settings-bar">
+        <label>Model přepisu:</label>
+        <select id="modelSelect" class="lang-select">
+            <option value="small">Rychlý (small) - nižší kvalita, rychlý přepis</option>
+            <option value="medium" selected>Přesný (medium) - dobrá čeština, doporučeno</option>
+            <option value="large-v3">Nejpřesnější (large) - nejlepší kvalita, nejpomalejší</option>
+        </select>
+        <span style="color:var(--text-muted); font-size:12px;" id="modelHint">Doporučeno - dobrá čeština</span>
+    </div>
+
+    <!-- Nastavení - slovník a jména -->
+    <div style="margin-bottom:20px;">
+        <button class="btn btn-dark" onclick="toggleSettings()">
+            Nastaveni (slovnik oprav, jmena)
+        </button>
+        <div id="settingsPanel" class="settings-panel" style="display:none;">
+            <div style="display:flex; gap:20px; flex-wrap:wrap;">
+                <div style="flex:1; min-width:280px;">
+                    <h4 style="margin:0 0 8px; color:var(--text-primary);">Slovnik oprav</h4>
+                    <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">
+                        Automaticke opravy pri prepisu. Format: chybny text = spravny text
+                    </p>
+                    <textarea id="dictionaryEditor" rows="8"></textarea>
+                </div>
+                <div style="flex:1; min-width:280px;">
+                    <h4 style="margin:0 0 8px; color:var(--text-primary);">Jmena (neprekladat)</h4>
+                    <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">
+                        Jmena ktera zustanou v originale pri prekladu. Jedno na radek.
+                    </p>
+                    <textarea id="namesEditor" rows="8"></textarea>
+                </div>
+            </div>
+            <div style="margin-top:10px; display:flex; gap:8px;">
+                <button class="btn btn-primary" onclick="saveSettings()">Ulozit nastaveni</button>
+                <span id="settingsSaved" style="color:var(--green); font-size:13px; display:none; align-self:center;">Ulozeno!</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ulozene projekty -->
+    <div style="margin-bottom:20px;">
+        <button class="btn btn-dark" onclick="toggleProjects()">
+            Ulozene projekty
+        </button>
+        <div id="projectsPanel" class="settings-panel" style="display:none;">
+            <div id="projectsList" style="color:var(--text-secondary); font-size:13px;">Nacitam...</div>
+        </div>
+    </div>
+
+    <!-- Seznam úloh -->
+    <div class="jobs-list" id="jobsList"></div>
+</div>
+
+<script>
+const uploadArea = document.getElementById('uploadArea');
+const fileInput = document.getElementById('fileInput');
+const jobsList = document.getElementById('jobsList');
+
+// Data cache per job
+const jobData = {};
+
+// Drag & Drop
+uploadArea.addEventListener('click', () => fileInput.click());
+uploadArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadArea.classList.add('dragover');
+});
+uploadArea.addEventListener('dragleave', () => {
+    uploadArea.classList.remove('dragover');
+});
+uploadArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadArea.classList.remove('dragover');
+    if (e.dataTransfer.files.length > 0) {
+        uploadFiles(e.dataTransfer.files);
+    }
+});
+fileInput.addEventListener('change', () => {
+    if (fileInput.files.length > 0) {
+        uploadFiles(fileInput.files);
+    }
+});
+
+async function uploadFiles(files) {
+    const formData = new FormData();
+    for (const file of files) {
+        formData.append('files', file);
+    }
+    formData.append('model', document.getElementById('modelSelect').value);
+
+    try {
+        const resp = await fetch('/upload', { method: 'POST', body: formData });
+        const data = await resp.json();
+        for (const job of data.jobs) {
+            createJobCard(job.id, job.filename);
+            pollJobStatus(job.id);
+        }
+    } catch (err) {
+        alert('Chyba při nahrávání: ' + err.message);
+    }
+    fileInput.value = '';
+}
+
+function createJobCard(jobId, filename) {
+    const card = document.createElement('div');
+    card.className = 'job-card';
+    card.id = `job-${jobId}`;
+    card.innerHTML = `
+        <div class="job-header">
+            <span class="job-filename">${escapeHtml(filename)}</span>
+            <div style="display:flex; gap:8px; align-items:center;">
+                <span class="job-status queued" id="status-${jobId}">Ve frontě</span>
+                <button class="btn-delete" onclick="deleteJob('${jobId}')" title="Smazat">X</button>
+            </div>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-${jobId}" style="width: 0%"></div>
+        </div>
+        <div id="progress-text-${jobId}" style="font-size:12px;color:#64748b;margin-bottom:10px;">
+            Čekání na zpracování...
+        </div>
+        <div id="results-${jobId}" class="results-area" style="display:none;"></div>
+    `;
+    jobsList.prepend(card);
+}
+
+function pollJobStatus(jobId) {
+    const interval = setInterval(async () => {
+        try {
+            const resp = await fetch(`/status/${jobId}`);
+            const data = await resp.json();
+
+            const statusEl = document.getElementById(`status-${jobId}`);
+            const progressEl = document.getElementById(`progress-${jobId}`);
+            const progressText = document.getElementById(`progress-text-${jobId}`);
+
+            progressEl.style.width = data.progress + '%';
+
+            if (data.status === 'processing') {
+                statusEl.className = 'job-status processing';
+                statusEl.textContent = 'Zpracovávám';
+                progressText.textContent = `Přepisuji... ${data.progress}%`;
+            } else if (data.status === 'done') {
+                statusEl.className = 'job-status done';
+                statusEl.textContent = 'Hotovo';
+                progressText.textContent = `Dokončeno - ${data.segment_count} segmentů`;
+                if (data.claim_count > 0) {
+                    progressText.textContent += `, ${data.claim_count} zdravotních tvrzení`;
+                }
+                clearInterval(interval);
+                showResults(jobId);
+            } else if (data.status === 'error') {
+                statusEl.className = 'job-status error';
+                statusEl.textContent = 'Chyba';
+                progressText.textContent = `Chyba: ${data.error}`;
+                clearInterval(interval);
+            }
+        } catch (err) { /* retry */ }
+    }, 1500);
+}
+
+async function showResults(jobId) {
+    const resp = await fetch(`/result/${jobId}`);
+    const data = await resp.json();
+    const resultsDiv = document.getElementById(`results-${jobId}`);
+
+    // Uložit data
+    jobData[jobId] = {
+        segments: data.segments,
+        health_claims: data.health_claims
+    };
+
+    resultsDiv.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <h4 style="margin:0; color:var(--text-primary);">Přepis textu <span style="font-weight:400; font-size:12px; color:var(--text-muted);">(klikněte na text pro úpravu)</span></h4>
+            <div style="display:flex; gap:8px; align-items:center;">
+                <button class="btn btn-success" onclick="saveEdits('${jobId}')" id="save-btn-${jobId}" style="display:none;">
+                    Uložit změny
+                </button>
+                <button class="btn btn-dark" onclick="recheckClaims('${jobId}')">
+                    Zkontrolovat zdravotní tvrzení
+                </button>
+                <button class="btn btn-primary" onclick="saveProject('${jobId}')">
+                    Ulozit upravy
+                </button>
+            </div>
+        </div>
+
+        <div class="search-bar" id="search-bar-${jobId}">
+            <input type="text" id="search-input-${jobId}" placeholder="Hledat v prepisu..." onkeydown="if(event.key==='Enter') searchInTranscript('${jobId}')">
+            <button class="btn btn-dark" onclick="searchInTranscript('${jobId}')">Hledat</button>
+            <button class="btn btn-orange" onclick="markSearchAsClaim('${jobId}')">Oznacit jako zdravotni tvrzeni</button>
+            <span class="search-match-count" id="search-count-${jobId}"></span>
+        </div>
+
+        <div class="transcript-box" id="transcript-${jobId}"></div>
+
+        <div id="claims-summary-${jobId}" style="margin:10px 0;"></div>
+
+        <div class="actions">
+            <button class="btn btn-primary" onclick="exportFile('${jobId}', 'txt')">
+                Exportovat TXT
+            </button>
+            <button class="btn btn-success" onclick="exportFile('${jobId}', 'pdf')">
+                Exportovat PDF
+            </button>
+            <button class="btn btn-orange" onclick="exportFile('${jobId}', 'srt')">
+                Exportovat SRT titulky
+            </button>
+            <button class="btn btn-purple" onclick="exportZip('${jobId}')">
+                Exportovat vse (ZIP)
+            </button>
+            <button class="btn btn-dark" onclick="downloadClaimsReport('${jobId}')">
+                Stahnout report tvrzeni
+            </button>
+        </div>
+
+        <div class="translate-bar">
+            <span style="font-weight:600; font-size:13px; margin-right:10px;">Přeložit do:</span>
+            <label class="lang-check"><input type="checkbox" value="sk" data-job="${jobId}"> SK</label>
+            <label class="lang-check"><input type="checkbox" value="en" data-job="${jobId}"> EN</label>
+            <label class="lang-check"><input type="checkbox" value="de" data-job="${jobId}"> DE</label>
+            <label class="lang-check"><input type="checkbox" value="pl" data-job="${jobId}"> PL</label>
+            <label class="lang-check"><input type="checkbox" value="hu" data-job="${jobId}"> HU</label>
+            <label class="lang-check"><input type="checkbox" value="ro" data-job="${jobId}"> RO</label>
+            <button class="btn btn-purple" onclick="translateJobMulti('${jobId}')" style="margin-left:10px;">
+                Přeložit vybrané
+            </button>
+            <span id="translate-status-${jobId}" style="font-size:12px; color:var(--text-muted); margin-left:8px;"></span>
+        </div>
+
+        <div id="translations-${jobId}"></div>
+    `;
+
+    renderSegments(jobId);
+    resultsDiv.style.display = 'block';
+}
+
+function highlightClaims(text, claims) {
+    // Najdi fráze z claims které se vyskytují v tomto segmentu
+    // a vlož kolem nich <mark> tag
+    let result = escapeHtml(text);
+    const textLower = text.toLowerCase();
+
+    // Sesbírat všechny nálezy v tomto segmentu
+    let highlights = [];
+    for (const claim of claims) {
+        const claimLower = claim.text.toLowerCase();
+        let searchFrom = 0;
+        while (true) {
+            const idx = textLower.indexOf(claimLower, searchFrom);
+            if (idx === -1) break;
+            highlights.push({
+                start: idx,
+                end: idx + claim.text.length,
+                reason: claim.reason
+            });
+            searchFrom = idx + 1;
+        }
+    }
+
+    if (highlights.length === 0) return { html: result, count: 0 };
+
+    // Seřadit od konce aby replace neposouval indexy
+    highlights.sort((a, b) => b.start - a.start);
+
+    // Odstranit překryvy (nechat delší)
+    let filtered = [];
+    for (const h of highlights) {
+        if (!filtered.some(f => h.start < f.end && h.end > f.start)) {
+            filtered.push(h);
+        }
+    }
+    filtered.sort((a, b) => b.start - a.start);
+
+    // Vložit <mark> tagy (pracujeme s originálním textem, pak escapujeme po částech)
+    let parts = [];
+    let lastEnd = text.length;
+    for (const h of filtered) {
+        // Text za highlightem
+        if (h.end < lastEnd) {
+            parts.unshift({ text: text.substring(h.end, lastEnd), highlight: false });
+        }
+        parts.unshift({ text: text.substring(h.start, h.end), highlight: true, reason: h.reason });
+        lastEnd = h.start;
+    }
+    if (lastEnd > 0) {
+        parts.unshift({ text: text.substring(0, lastEnd), highlight: false });
+    }
+
+    result = parts.map(p => {
+        const escaped = escapeHtml(p.text);
+        if (p.highlight) {
+            return `<mark class="health-mark" title="${escapeHtml(p.reason)}">${escaped}</mark>`;
+        }
+        return escaped;
+    }).join('');
+
+    return { html: result, count: filtered.length };
+}
+
+function renderSegments(jobId) {
+    const container = document.getElementById(`transcript-${jobId}`);
+    const { segments, health_claims } = jobData[jobId];
+
+    container.innerHTML = '';
+
+    for (let i = 0; i < segments.length; i++) {
+        const seg = segments[i];
+        const ts = formatTimestamp(seg.start) + ' - ' + formatTimestamp(seg.end);
+
+        const { html: highlightedHtml, count: claimCount } = highlightClaims(seg.text, health_claims);
+
+        // Apply search highlighting on top of claim highlighting
+        const searchQuery = jobData[jobId].searchQuery || '';
+        const { html: finalHtml } = applySearchHighlight(highlightedHtml, searchQuery);
+
+        const row = document.createElement('div');
+        row.className = 'segment';
+        row.dataset.index = i;
+
+        let html = `<span class="timestamp">[${ts}]</span>`;
+        html += `<span class="seg-text" contenteditable="true" data-job="${jobId}" data-idx="${i}">${finalHtml}</span>`;
+
+        row.innerHTML = html;
+        container.appendChild(row);
+
+        const textSpan = row.querySelector('.seg-text');
+        textSpan.addEventListener('input', () => {
+            document.getElementById(`save-btn-${jobId}`).style.display = 'inline-flex';
+            textSpan.classList.add('edited');
+        });
+    }
+
+    renderClaimsSummary(jobId);
+}
+
+function renderClaimsSummary(jobId) {
+    const summaryDiv = document.getElementById(`claims-summary-${jobId}`);
+    const { health_claims } = jobData[jobId];
+
+    if (health_claims.length === 0) {
+        summaryDiv.innerHTML = '<p style="color:var(--green); font-size:13px; padding:8px 0;">Nebyla nalezena žádná zdravotní tvrzení.</p>';
+        return;
+    }
+
+    let html = `<div class="claims-panel">
+        <h4 style="margin:0 0 10px;">Nalezeno ${health_claims.length} zdravotních tvrzení:</h4>`;
+
+    for (const claim of health_claims) {
+        html += `<div class="claim-item">
+            <span class="claim-reason">${escapeHtml(claim.reason)}</span>
+            <p class="claim-text">"${escapeHtml(claim.text.substring(0, 150))}${claim.text.length > 150 ? '...' : ''}"</p>
+        </div>`;
+    }
+
+    html += '</div>';
+    summaryDiv.innerHTML = html;
+}
+
+async function saveEdits(jobId) {
+    // Sesbírat editovaný text ze všech segmentů
+    const textSpans = document.querySelectorAll(`[data-job="${jobId}"].seg-text`);
+    const segments = jobData[jobId].segments;
+
+    for (const span of textSpans) {
+        const idx = parseInt(span.dataset.idx);
+        segments[idx].text = span.textContent;
+    }
+
+    try {
+        const resp = await fetch(`/save/${jobId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ segments })
+        });
+        const data = await resp.json();
+
+        if (data.ok) {
+            jobData[jobId].health_claims = data.health_claims;
+            document.getElementById(`save-btn-${jobId}`).style.display = 'none';
+
+            // Odstranit "edited" třídu
+            textSpans.forEach(s => s.classList.remove('edited'));
+
+            // Přerenderovat s aktualizovanými health claims
+            renderSegments(jobId);
+
+            // Vizuální potvrzení
+            const btn = document.getElementById(`save-btn-${jobId}`);
+            const origText = btn.textContent;
+            btn.textContent = 'Uloženo!';
+            btn.style.display = 'inline-flex';
+            setTimeout(() => { btn.style.display = 'none'; btn.textContent = origText; }, 1500);
+        }
+    } catch (err) {
+        alert('Chyba při ukládání: ' + err.message);
+    }
+}
+
+async function recheckClaims(jobId) {
+    // Nejdříve uložit aktuální text
+    const textSpans = document.querySelectorAll(`[data-job="${jobId}"].seg-text`);
+    const segments = jobData[jobId].segments;
+    for (const span of textSpans) {
+        const idx = parseInt(span.dataset.idx);
+        segments[idx].text = span.textContent;
+    }
+
+    try {
+        const resp = await fetch(`/save/${jobId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ segments })
+        });
+        const data = await resp.json();
+
+        if (data.ok) {
+            jobData[jobId].health_claims = data.health_claims;
+            renderSegments(jobId);
+        }
+    } catch (err) {
+        alert('Chyba: ' + err.message);
+    }
+}
+
+const langNames = {
+    cs: 'Čeština', sk: 'Slovenština', en: 'Angličtina',
+    de: 'Němčina', pl: 'Polština', hu: 'Maďarština', ro: 'Rumunština'
+};
+
+async function translateJobMulti(jobId) {
+    const checkboxes = document.querySelectorAll(`input[data-job="${jobId}"]:checked`);
+    const langs = Array.from(checkboxes).map(cb => cb.value);
+
+    if (langs.length === 0) {
+        alert('Vyberte alespoň jeden jazyk');
+        return;
+    }
+
+    const statusEl = document.getElementById(`translate-status-${jobId}`);
+    const translationsDiv = document.getElementById(`translations-${jobId}`);
+    translationsDiv.innerHTML = '';
+
+    // Uložit editace před překladem
+    await syncSegmentsToServer(jobId);
+
+    for (let i = 0; i < langs.length; i++) {
+        const lang = langs[i];
+        statusEl.textContent = `Překládám ${langNames[lang]} (${i + 1}/${langs.length})...`;
+
+        const formData = new FormData();
+        formData.append('target_lang', lang);
+
+        try {
+            const resp = await fetch(`/translate/${jobId}`, { method: 'POST', body: formData });
+            const data = await resp.json();
+
+            // Uložit překlad do cache
+            if (!jobData[jobId].translations) jobData[jobId].translations = {};
+            jobData[jobId].translations[lang] = data.segments;
+
+            let html = `<div class="translation-block" id="trans-${jobId}-${lang}">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin:15px 0 8px;">
+                    <h4 style="margin:0; color:var(--green);">${langNames[lang]}</h4>
+                    <div style="display:flex; gap:6px;">
+                        <button class="btn btn-dark" style="padding:4px 10px; font-size:11px;" onclick="exportTranslated('${jobId}','txt','${lang}')">TXT</button>
+                        <button class="btn btn-dark" style="padding:4px 10px; font-size:11px;" onclick="exportTranslated('${jobId}','pdf','${lang}')">PDF</button>
+                        <button class="btn btn-dark" style="padding:4px 10px; font-size:11px;" onclick="exportTranslated('${jobId}','srt','${lang}')">SRT</button>
+                    </div>
+                </div>
+                <div class="translation-box">`;
+
+            for (const seg of data.segments) {
+                const ts = formatTimestamp(seg.start) + ' - ' + formatTimestamp(seg.end);
+                html += `<div class="segment">
+                    <span class="timestamp">[${ts}]</span>${escapeHtml(seg.text)}
+                </div>`;
+            }
+
+            html += '</div></div>';
+            translationsDiv.innerHTML += html;
+        } catch (err) {
+            translationsDiv.innerHTML += `<p style="color:red;padding:10px;">Chyba překladu ${langNames[lang]}: ${err.message}</p>`;
+        }
+    }
+
+    statusEl.textContent = `Hotovo - ${langs.length} jazyků přeloženo`;
+    setTimeout(() => statusEl.textContent = '', 3000);
+}
+
+async function syncSegmentsToServer(jobId) {
+    const textSpans = document.querySelectorAll(`[data-job="${jobId}"].seg-text`);
+    if (textSpans.length === 0) return;
+
+    const segments = jobData[jobId].segments;
+    for (const span of textSpans) {
+        const idx = parseInt(span.dataset.idx);
+        segments[idx].text = span.textContent;
+    }
+
+    await fetch(`/save/${jobId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ segments })
+    });
+}
+
+async function deleteJob(jobId) {
+    const card = document.getElementById(`job-${jobId}`);
+    if (card) {
+        card.style.opacity = '0.5';
+        await fetch(`/delete/${jobId}`, { method: 'POST' });
+        card.remove();
+        delete jobData[jobId];
+    }
+}
+
+function downloadFile(url, filename) {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename || '';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    // Zobrazit notifikaci
+    showToast(`Stazeno: ${filename || 'soubor'}`);
+}
+
+function showToast(message) {
+    let toast = document.getElementById('toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'toast';
+        document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.className = 'toast show';
+    setTimeout(() => toast.className = 'toast', 2500);
+}
+
+async function exportFile(jobId, format) {
+    await syncSegmentsToServer(jobId);
+    const name = (jobData[jobId]?.segments?.[0] ? jobId : jobId) + '.' + format;
+    downloadFile(`/export/${jobId}?format=${format}&lang=original`, name);
+}
+
+async function exportTranslated(jobId, format, lang) {
+    const name = jobId + '_' + lang + '.' + format;
+    downloadFile(`/export/${jobId}?format=${format}&lang=${lang}`, name);
+}
+
+function formatTimestamp(seconds) {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Settings panel
+async function toggleSettings() {
+    const panel = document.getElementById('settingsPanel');
+    if (panel.style.display === 'none') {
+        panel.style.display = 'block';
+        // Načíst slovník a jména
+        const [dictResp, namesResp] = await Promise.all([
+            fetch('/dictionary'),
+            fetch('/names')
+        ]);
+        const dictData = await dictResp.json();
+        const namesData = await namesResp.json();
+        document.getElementById('dictionaryEditor').value = dictData.content;
+        document.getElementById('namesEditor').value = namesData.content;
+    } else {
+        panel.style.display = 'none';
+    }
+}
+
+async function saveSettings() {
+    const dictContent = document.getElementById('dictionaryEditor').value;
+    const namesContent = document.getElementById('namesEditor').value;
+
+    await Promise.all([
+        fetch('/dictionary', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: dictContent })
+        }),
+        fetch('/names', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: namesContent })
+        })
+    ]);
+
+    const saved = document.getElementById('settingsSaved');
+    saved.style.display = 'inline';
+    setTimeout(() => saved.style.display = 'none', 2000);
+}
+
+// Search in transcript
+function searchInTranscript(jobId) {
+    const query = document.getElementById(`search-input-${jobId}`).value.trim();
+    const countEl = document.getElementById(`search-count-${jobId}`);
+
+    // Store current search query
+    if (!jobData[jobId]) return;
+    jobData[jobId].searchQuery = query;
+
+    if (!query) {
+        jobData[jobId].searchQuery = '';
+        countEl.textContent = '';
+        renderSegments(jobId);
+        return;
+    }
+
+    renderSegments(jobId);
+
+    // Count matches
+    const matches = document.querySelectorAll(`#transcript-${jobId} .search-match`);
+    countEl.textContent = `Nalezeno: ${matches.length}`;
+}
+
+function applySearchHighlight(html, query) {
+    if (!query) return { html, count: 0 };
+    // We need to highlight query in the html without breaking existing tags
+    const queryLower = query.toLowerCase();
+    let count = 0;
+    // Split by tags, only highlight in text parts
+    const parts = html.split(/(<[^>]+>)/);
+    for (let i = 0; i < parts.length; i++) {
+        if (parts[i].startsWith('<')) continue; // skip tags
+        const textLower = parts[i].toLowerCase();
+        let result = '';
+        let lastIdx = 0;
+        let idx;
+        while ((idx = textLower.indexOf(queryLower, lastIdx)) !== -1) {
+            result += parts[i].substring(lastIdx, idx);
+            result += `<span class="search-match">${parts[i].substring(idx, idx + query.length)}</span>`;
+            lastIdx = idx + query.length;
+            count++;
+        }
+        result += parts[i].substring(lastIdx);
+        parts[i] = result;
+    }
+    return { html: parts.join(''), count };
+}
+
+async function markSearchAsClaim(jobId) {
+    const input = document.getElementById(`search-input-${jobId}`);
+    const query = input ? input.value.trim() : '';
+    if (!query) {
+        alert('Nejdrive zadejte hledany text do vyhledavaciho pole');
+        return;
+    }
+
+    // Nejdříve uložit aktuální editace
+    await syncSegmentsToServer(jobId);
+
+    try {
+        const resp = await fetch(`/mark-claim/${jobId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: query, reason: 'rucne oznaceno' })
+        });
+
+        if (!resp.ok) {
+            const err = await resp.json();
+            alert('Chyba: ' + (err.error || 'neznama chyba'));
+            return;
+        }
+
+        const data = await resp.json();
+        jobData[jobId].health_claims = data.health_claims;
+        jobData[jobId].searchQuery = '';
+        input.value = '';
+        document.getElementById(`search-count-${jobId}`).textContent = '';
+        renderSegments(jobId);
+        showToast(`"${query}" oznaceno jako zdravotni tvrzeni`);
+    } catch (err) {
+        alert('Chyba pri oznacovani: ' + err.message);
+    }
+}
+
+// Export ZIP
+async function exportZip(jobId) {
+    await syncSegmentsToServer(jobId);
+    const translations = jobData[jobId]?.translations || {};
+    const langs = Object.keys(translations);
+    let url = `/export-zip/${jobId}`;
+    if (langs.length > 0) {
+        url += '?langs=' + langs.join(',');
+    }
+    downloadFile(url, 'export.zip');
+}
+
+// Claims report
+async function downloadClaimsReport(jobId) {
+    downloadFile(`/report/${jobId}`, `report_${jobId}.pdf`);
+}
+
+// Projects
+async function toggleProjects() {
+    const panel = document.getElementById('projectsPanel');
+    if (panel.style.display === 'none') {
+        panel.style.display = 'block';
+        await loadProjectsList();
+    } else {
+        panel.style.display = 'none';
+    }
+}
+
+async function loadProjectsList() {
+    const listDiv = document.getElementById('projectsList');
+    try {
+        const resp = await fetch('/projects');
+        const data = await resp.json();
+        const projects = data.projects || data || [];
+
+        if (projects.length === 0) {
+            listDiv.innerHTML = '<p style="color:var(--text-muted);">Zadne ulozene projekty.</p>';
+            return;
+        }
+
+        let html = '';
+        for (const proj of projects) {
+            html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border);">
+                <div>
+                    <span style="color:var(--text-primary); font-weight:500;">${escapeHtml(proj.name || proj.filename || proj.id)}</span>
+                    <span style="color:var(--text-muted); font-size:11px; margin-left:8px;">${proj.date || ''}</span>
+                </div>
+                <button class="btn btn-primary" style="padding:4px 12px; font-size:12px;" onclick="loadProject('${proj.id}')">Nacist</button>
+            </div>`;
+        }
+        listDiv.innerHTML = html;
+    } catch (err) {
+        listDiv.innerHTML = '<p style="color:var(--red);">Chyba pri nacitani projektu.</p>';
+    }
+}
+
+async function loadProject(projectId) {
+    try {
+        const resp = await fetch(`/project/load`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: projectId })
+        });
+        const data = await resp.json();
+
+        if (data.job_id) {
+            createJobCard(data.job_id, data.filename || 'Nacten projekt');
+            // Set status to done
+            const statusEl = document.getElementById(`status-${data.job_id}`);
+            if (statusEl) {
+                statusEl.className = 'job-status done';
+                statusEl.textContent = 'Hotovo';
+            }
+            const progressEl = document.getElementById(`progress-${data.job_id}`);
+            if (progressEl) progressEl.style.width = '100%';
+            const progressText = document.getElementById(`progress-text-${data.job_id}`);
+            if (progressText) progressText.textContent = 'Nacten z projektu';
+
+            showResults(data.job_id);
+            showToast('Projekt nacten');
+        }
+    } catch (err) {
+        alert('Chyba pri nacitani projektu: ' + err.message);
+    }
+}
+
+async function saveProject(jobId) {
+    await syncSegmentsToServer(jobId);
+    try {
+        const resp = await fetch(`/project/save/${jobId}`, { method: 'POST' });
+        const data = await resp.json();
+        if (data.ok) {
+            showToast('Projekt ulozen');
+        } else {
+            showToast(data.error || 'Chyba pri ukladani');
+        }
+    } catch (err) {
+        alert('Chyba: ' + err.message);
+    }
+}
+
+// Model hint
+document.getElementById('modelSelect').addEventListener('change', function() {
+    const hints = {
+        'small': 'Rychlejší, ale horší čeština',
+        'medium': 'Doporučeno - dobrá čeština',
+        'large-v3': 'Nejlepší přesnost, vyžaduje hodně RAM a času'
+    };
+    document.getElementById('modelHint').textContent = hints[this.value] || '';
+});
+</script>
+
+</body>
+</html>
