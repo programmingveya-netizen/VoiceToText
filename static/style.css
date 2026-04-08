@@ -638,6 +638,27 @@ body {
     transform: translateX(-50%) translateY(0);
 }
 
+/* View toggle */
+.view-toggle {
+    padding: 4px 12px !important;
+    font-size: 11px !important;
+}
+
+.view-toggle.active {
+    background: var(--accent) !important;
+    color: white !important;
+    border-color: var(--accent) !important;
+}
+
+.paragraph-mode {
+    display: block !important;
+}
+
+.paragraph-mode .seg-text {
+    display: block;
+    text-align: justify;
+}
+
 /* Responsive */
 @media (max-width: 600px) {
     .container { padding: 0 10px; }

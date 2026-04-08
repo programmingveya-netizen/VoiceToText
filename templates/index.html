@@ -159,6 +159,8 @@ const T = {
         loaded_from_project: 'Načten z projektu',
         marked_count: (n) => `Nalezeno ${n} označených výrazů:`,
         upload_error: 'Chyba při nahrávání',
+        view_timestamps: 'Časové značky',
+        view_paragraph: 'Odstavec',
         input_lang_label: 'Jazyk nahrávky:',
         input_auto: 'Automaticky',
         input_cs: 'Čeština',
@@ -229,6 +231,8 @@ const T = {
         loaded_from_project: 'Loaded from project',
         marked_count: (n) => `Found ${n} marked phrases:`,
         upload_error: 'Upload error',
+        view_timestamps: 'Timestamps',
+        view_paragraph: 'Paragraph',
         input_lang_label: 'Input language:',
         input_auto: 'Auto-detect',
         input_cs: 'Czech',
@@ -392,6 +396,10 @@ async function showResults(jobId) {
             <button class="btn btn-orange" onclick="markSearchAsClaim('${jobId}')">${t('mark_red')}</button>
             <span class="search-match-count" id="search-count-${jobId}"></span>
         </div>
+        <div style="display:flex; gap:6px; margin-bottom:8px;">
+            <button class="btn btn-dark view-toggle active" id="view-ts-${jobId}" onclick="setViewMode('${jobId}','timestamps')">${t('view_timestamps')}</button>
+            <button class="btn btn-dark view-toggle" id="view-para-${jobId}" onclick="setViewMode('${jobId}','paragraph')">${t('view_paragraph')}</button>
+        </div>
         <div class="transcript-box" id="transcript-${jobId}"></div>
         <div class="stats-bar" id="stats-${jobId}"></div>
         <div id="claims-summary-${jobId}" style="margin:10px 0;"></div>
@@ -453,25 +461,54 @@ function highlightClaims(text, claims) {
     return { html: result, count: filtered.length };
 }
 
+function setViewMode(jobId, mode) {
+    if (!jobData[jobId]) return;
+    jobData[jobId].viewMode = mode;
+    document.getElementById(`view-ts-${jobId}`).className = 'btn btn-dark view-toggle' + (mode === 'timestamps' ? ' active' : '');
+    document.getElementById(`view-para-${jobId}`).className = 'btn btn-dark view-toggle' + (mode === 'paragraph' ? ' active' : '');
+    renderSegments(jobId);
+}
+
 function renderSegments(jobId) {
     const container = document.getElementById(`transcript-${jobId}`);
     const { segments, health_claims } = jobData[jobId];
+    const viewMode = jobData[jobId].viewMode || 'timestamps';
     container.innerHTML = '';
-    for (let i = 0; i < segments.length; i++) {
-        const seg = segments[i];
-        const ts = formatTimestamp(seg.start) + ' - ' + formatTimestamp(seg.end);
-        const { html: highlightedHtml } = highlightClaims(seg.text, health_claims);
+
+    if (viewMode === 'paragraph') {
+        // Režim odstavec - spojený text bez timestamps
+        const allText = segments.map(s => s.text).join(' ');
+        const { html: highlightedHtml } = highlightClaims(allText, health_claims);
         const searchQuery = jobData[jobId].searchQuery || '';
         const { html: finalHtml } = applySearchHighlight(highlightedHtml, searchQuery);
-        const row = document.createElement('div');
-        row.className = 'segment'; row.dataset.index = i;
-        row.innerHTML = `<span class="timestamp">[${ts}]</span><span class="seg-text" contenteditable="true" data-job="${jobId}" data-idx="${i}">${finalHtml}</span>`;
-        container.appendChild(row);
-        row.querySelector('.seg-text').addEventListener('input', () => {
+        const para = document.createElement('div');
+        para.className = 'segment paragraph-mode';
+        para.innerHTML = `<span class="seg-text" contenteditable="true" data-job="${jobId}" data-idx="paragraph" style="line-height:1.9;">${finalHtml}</span>`;
+        container.appendChild(para);
+        // Při editaci v odstavci - rozdělit zpět do segmentů při uložení
+        para.querySelector('.seg-text').addEventListener('input', () => {
             document.getElementById(`save-btn-${jobId}`).style.display = 'inline-flex';
-            row.querySelector('.seg-text').classList.add('edited');
+            para.querySelector('.seg-text').classList.add('edited');
         });
+    } else {
+        // Režim timestamps
+        for (let i = 0; i < segments.length; i++) {
+            const seg = segments[i];
+            const ts = formatTimestamp(seg.start) + ' - ' + formatTimestamp(seg.end);
+            const { html: highlightedHtml } = highlightClaims(seg.text, health_claims);
+            const searchQuery = jobData[jobId].searchQuery || '';
+            const { html: finalHtml } = applySearchHighlight(highlightedHtml, searchQuery);
+            const row = document.createElement('div');
+            row.className = 'segment'; row.dataset.index = i;
+            row.innerHTML = `<span class="timestamp">[${ts}]</span><span class="seg-text" contenteditable="true" data-job="${jobId}" data-idx="${i}">${finalHtml}</span>`;
+            container.appendChild(row);
+            row.querySelector('.seg-text').addEventListener('input', () => {
+                document.getElementById(`save-btn-${jobId}`).style.display = 'inline-flex';
+                row.querySelector('.seg-text').classList.add('edited');
+            });
+        }
     }
+
     renderClaimsSummary(jobId);
     renderStats(jobId);
 }
