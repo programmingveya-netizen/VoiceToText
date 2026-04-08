@@ -13,6 +13,7 @@
   <img src="https://img.shields.io/badge/whisper-faster--whisper-orange" alt="Whisper">
   <img src="https://img.shields.io/badge/UI-FastAPI%20%2B%20Dark%20Mode-a93226" alt="UI">
   <img src="https://img.shields.io/badge/GPU-auto%20detect-green" alt="GPU">
+  <img src="https://img.shields.io/badge/tests-16%20passed-brightgreen?logo=pytest&logoColor=white" alt="Tests">
 </p>
 
 <p align="center">
