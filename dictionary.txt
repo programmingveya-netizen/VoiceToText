@@ -1,7 +1,7 @@
-# Slovnik oprav pro prepis
-# Format: chybny text = spravny text
-# Kazdy radek jedna oprava, prazdne radky a radky zacinajici # jsou ignorovany
+# Correction dictionary for transcription
+# Format: wrong text = correct text
+# One correction per line, empty lines and lines starting with # are ignored
 #
-# Examples / Priklady:
+# Examples:
 # teh = the
-# esencialni = esenciální
+# recieve = receive

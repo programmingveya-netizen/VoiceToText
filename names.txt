@@ -1,6 +1,5 @@
-# Seznam vlastnich jmen, ktera se NEPREKLADAJI
-# Jedno jmeno nebo fraze na radek
-# Prazdne radky a radky zacinajici # jsou ignorovany
+# Names that should NOT be translated
+# One name or phrase per line
+# Empty lines and lines starting with # are ignored
 #
-# Pridejte sem jmena, ktera se v nahravkach vyskytuji:
-
+# Add names that appear in your recordings:
