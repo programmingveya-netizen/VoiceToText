@@ -164,13 +164,15 @@ def export_pdf(segments: list[dict], output_path: str,
 
 def export_srt(segments: list[dict], output_path: str) -> str:
     lines = []
-    for i, seg in enumerate(segments, 1):
+    counter = 0
+    for seg in segments:
         text = seg["text"].strip()
         if not text:
             continue
+        counter += 1
         start = format_srt_timestamp(seg["start"])
         end = format_srt_timestamp(seg["end"])
-        lines.append(f"{i}")
+        lines.append(f"{counter}")
         lines.append(f"{start} --> {end}")
         lines.append(text)
         lines.append("")
