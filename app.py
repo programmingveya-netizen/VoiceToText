@@ -59,7 +59,7 @@ async def delete_job(job_id: str):
 
 
 @app.post("/upload")
-async def upload_files(files: list[UploadFile] = File(...), model: str = Form("small")):
+async def upload_files(files: list[UploadFile] = File(...), model: str = Form("small"), input_language: str = Form("cs")):
     created_jobs = []
 
     for file in files:
@@ -84,6 +84,7 @@ async def upload_files(files: list[UploadFile] = File(...), model: str = Form("s
             "health_claims": [],
             "error": None,
             "model": model,
+            "input_language": input_language,
         }
 
         t = threading.Thread(

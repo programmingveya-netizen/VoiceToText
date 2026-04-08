@@ -51,6 +51,19 @@
             <option value="large-v3" data-i18n-opt="model_large"></option>
         </select>
         <span style="color:var(--text-muted); font-size:12px;" id="modelHint"></span>
+
+        <span style="margin-left:16px;"></span>
+        <label data-i18n="input_lang_label"></label>
+        <select id="inputLangSelect" class="lang-select">
+            <option value="auto" data-i18n-opt="input_auto"></option>
+            <option value="cs" selected data-i18n-opt="input_cs"></option>
+            <option value="sk" data-i18n-opt="input_sk"></option>
+            <option value="en" data-i18n-opt="input_en"></option>
+            <option value="de" data-i18n-opt="input_de"></option>
+            <option value="pl" data-i18n-opt="input_pl"></option>
+            <option value="hu" data-i18n-opt="input_hu"></option>
+            <option value="ro" data-i18n-opt="input_ro"></option>
+        </select>
     </div>
 
     <div style="margin-bottom:20px;">
@@ -146,6 +159,16 @@ const T = {
         loaded_from_project: 'Načten z projektu',
         marked_count: (n) => `Nalezeno ${n} označených výrazů:`,
         upload_error: 'Chyba při nahrávání',
+        input_lang_label: 'Jazyk nahrávky:',
+        input_auto: 'Automaticky',
+        input_cs: 'Čeština',
+        input_sk: 'Slovenština',
+        input_en: 'Angličtina',
+        input_de: 'Němčina',
+        input_pl: 'Polština',
+        input_hu: 'Maďarština',
+        input_ro: 'Rumunština',
+        translate_all: 'Přeložit do všech',
         stats_words: 'slov',
         stats_chars: 'znaků',
         stats_duration: 'délka',
@@ -206,6 +229,16 @@ const T = {
         loaded_from_project: 'Loaded from project',
         marked_count: (n) => `Found ${n} marked phrases:`,
         upload_error: 'Upload error',
+        input_lang_label: 'Input language:',
+        input_auto: 'Auto-detect',
+        input_cs: 'Czech',
+        input_sk: 'Slovak',
+        input_en: 'English',
+        input_de: 'German',
+        input_pl: 'Polish',
+        input_hu: 'Hungarian',
+        input_ro: 'Romanian',
+        translate_all: 'Translate to all',
         stats_words: 'words',
         stats_chars: 'chars',
         stats_duration: 'duration',
@@ -270,6 +303,7 @@ async function uploadFiles(files) {
     const formData = new FormData();
     for (const file of files) formData.append('files', file);
     formData.append('model', document.getElementById('modelSelect').value);
+    formData.append('input_language', document.getElementById('inputLangSelect').value);
     try {
         const resp = await fetch('/upload', { method: 'POST', body: formData });
         const data = await resp.json();
@@ -376,6 +410,7 @@ async function showResults(jobId) {
             <label class="lang-check"><input type="checkbox" value="hu" data-job="${jobId}"> HU</label>
             <label class="lang-check"><input type="checkbox" value="ro" data-job="${jobId}"> RO</label>
             <button class="btn btn-purple" onclick="translateJobMulti('${jobId}')" style="margin-left:10px;">${t('translate_btn')}</button>
+            <button class="btn btn-dark" onclick="translateAll('${jobId}')">${t('translate_all')}</button>
             <span id="translate-status-${jobId}" style="font-size:12px; color:var(--text-muted); margin-left:8px;"></span>
         </div>
         <div id="translations-${jobId}"></div>
@@ -522,6 +557,12 @@ async function translateJobMulti(jobId) {
     }
     statusEl.textContent = t('translated_done', langs.length);
     setTimeout(() => statusEl.textContent = '', 3000);
+}
+
+async function translateAll(jobId) {
+    // Zaškrtnout všechny checkboxy a spustit překlad
+    document.querySelectorAll(`input[data-job="${jobId}"]`).forEach(cb => cb.checked = true);
+    await translateJobMulti(jobId);
 }
 
 async function syncSegmentsToServer(jobId) {

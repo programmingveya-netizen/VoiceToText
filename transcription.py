@@ -69,22 +69,37 @@ def merge_into_sentences(segments: list[dict]) -> list[dict]:
     return merged
 
 
+INPUT_LANGUAGE_PROMPTS = {
+    "cs": CZECH_PROMPT,
+    "en": "Good evening, welcome to another episode. Today we will talk about health, natural products and essential oils.",
+    "de": "Guten Abend, willkommen zu einer weiteren Folge. Heute sprechen wir über Gesundheit und natürliche Produkte.",
+    "sk": "Dobrý večer, vitajte pri ďalšom diele. Dnes si povieme o zdraví a prírodných produktoch.",
+    "pl": "Dobry wieczór, witamy w kolejnym odcinku. Dziś porozmawiamy o zdrowiu i naturalnych produktach.",
+    "hu": "Jó estét, üdvözöljük a következő epizódban. Ma az egészségről és a természetes termékekről beszélünk.",
+    "ro": "Bună seara, bine ați venit la un nou episod. Astăzi vom vorbi despre sănătate și produse naturale.",
+}
+
+
 def transcribe_file(file_path: str, model_size: str, dictionary: dict[str, str],
-                    progress_callback=None) -> list[dict]:
+                    progress_callback=None, input_language: str = "cs") -> list[dict]:
     """Přepíše audio/video soubor pomocí faster-whisper"""
     from dictionary_utils import apply_dictionary
 
     model = get_whisper_model(model_size)
     beam = 5 if model_size in ("medium", "large-v3") else 3
 
+    # Auto-detect nebo specifický jazyk
+    lang_param = None if input_language == "auto" else input_language
+    prompt = INPUT_LANGUAGE_PROMPTS.get(input_language, "")
+
     segments_iter, info = model.transcribe(
         file_path,
-        language="cs",
+        language=lang_param,
         beam_size=beam,
         best_of=beam,
         vad_filter=True,
         vad_parameters=dict(min_silence_duration_ms=500),
-        initial_prompt=CZECH_PROMPT,
+        initial_prompt=prompt if prompt else None,
         condition_on_previous_text=True,
         temperature=0,
     )

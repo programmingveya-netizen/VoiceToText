@@ -17,12 +17,13 @@ def process_file(file_path: str, original_name: str, job_id: str, base_dir: Path
         jobs[job_id]["progress"] = 5
 
         model_size = jobs[job_id].get("model", "small")
+        input_language = jobs[job_id].get("input_language", "cs")
         dictionary = load_dictionary(base_dir)
 
         def on_progress(progress):
             jobs[job_id]["progress"] = progress
 
-        segments = transcribe_file(file_path, model_size, dictionary, on_progress)
+        segments = transcribe_file(file_path, model_size, dictionary, on_progress, input_language)
 
         jobs[job_id]["progress"] = 95
 
